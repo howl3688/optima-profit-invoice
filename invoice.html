@@ -82,6 +82,7 @@
 })();
 
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 /* ── Reset & Base ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -624,6 +625,19 @@ legend {
   </div>
   <div id="form-body">
 
+    <!-- Excel 匯入 -->
+    <fieldset>
+      <legend>Excel 匯入（選用）</legend>
+      <div style="font-size:10px;color:#aaa;margin-bottom:6px;line-height:1.5">
+        上傳 ERP 匯出的訂單明細（GBS 分頁），會自動帶入商品、數量、訂購人數與運費。建議先設定下方「分潤 %」再上傳，或匯入後補上皆可。
+      </div>
+      <div class="field">
+        <label>訂單明細檔案（.xlsx）</label>
+        <input type="file" id="excel-file" accept=".xlsx,.xls">
+      </div>
+      <div id="excel-import-status" style="font-size:11px;margin-top:6px;line-height:1.5;"></div>
+    </fieldset>
+
     <!-- 活動資訊 -->
     <fieldset>
       <legend>活動資訊</legend>
@@ -635,6 +649,10 @@ legend {
           <input type="text" id="brand-name" placeholder="品牌 / 商品" style="flex:1;min-width:70px;border:1px solid #ddd;border-radius:4px;padding:6px 8px;font-size:12px;font-family:inherit;display:none">
           <input type="text" id="event-date" placeholder="6/11-6/18" style="width:78px;border:1px solid #ddd;border-radius:4px;padding:6px 8px;font-size:12px;font-family:inherit">
         </div>
+      </div>
+      <div class="field">
+        <label>完整標題（匯入 Excel 後自動帶入，留空則用上面欄位自動組合）</label>
+        <input type="text" id="title-override" placeholder="留空＝自動組合上面的標題" style="margin-top:2px">
       </div>
       <div class="field-row">
         <div class="field">
@@ -923,7 +941,10 @@ function syncFromForm() {
   const kolName = document.getElementById('kol-name').value.trim();
   const eventDate = document.getElementById('event-date').value.trim();
   const brandName = document.getElementById('brand-name').value.trim();
-  if (state.company === 1) {
+  const titleOverride = document.getElementById('title-override').value.trim();
+  if (titleOverride) {
+    state.title = titleOverride;
+  } else if (state.company === 1) {
     state.title = [kolName, 'X', brandName, eventDate].filter(Boolean).join(' ');
   } else {
     state.title = [kolName, COMPANIES[state.company].titleSuffix, eventDate].filter(Boolean).join(' ');
@@ -1085,6 +1106,120 @@ function renderGiftRows() {
 function escAttr(s) {
   return (s || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 }
+
+// ── Excel (GBS) Import ───────────────────────────────────────────────────────
+function parseGBSSheet(rows) {
+  if (!rows || rows.length < 2) throw new Error('工作表內容為空');
+  const header = rows[0].map(h => String(h == null ? '' : h).trim());
+  const col = name => header.indexOf(name);
+  const iCampaign = col('團購名稱');
+  const iOrderNo  = col('訂單編號');
+  const iProduct  = col('訂購內容');
+  const iQty      = col('數量');
+  const iPrice    = col('訂購金額');
+  const iShipping = col('運費');
+  const iDiscount = col('折扣金額');
+  const iStatus   = col('訂單狀態');
+
+  if (iProduct < 0 || iQty < 0 || iPrice < 0) {
+    throw new Error('找不到「訂購內容」「數量」「訂購金額」欄位，請確認上傳的是 GBS 匯出格式');
+  }
+
+  // 找出取消/退貨的訂單編號，整筆跳過
+  const cancelledOrders = new Set();
+  if (iStatus >= 0 && iOrderNo >= 0) {
+    rows.slice(1).forEach(row => {
+      const status = String(row[iStatus] == null ? '' : row[iStatus]).trim();
+      const orderNo = row[iOrderNo];
+      if (status && orderNo && (status.includes('取消') || status.includes('退'))) {
+        cancelledOrders.add(String(orderNo).trim());
+      }
+    });
+  }
+
+  const productMap = new Map();
+  const orderIds = new Set();
+  const skippedOrderIds = new Set();
+  let shipping = 0, discount = 0, campaignTitle = '';
+
+  rows.slice(1).forEach(row => {
+    if (!row || row.length === 0) return;
+    const orderNo = iOrderNo >= 0 ? String(row[iOrderNo] == null ? '' : row[iOrderNo]).trim() : '';
+    if (orderNo && cancelledOrders.has(orderNo)) {
+      skippedOrderIds.add(orderNo);
+      return;
+    }
+    if (orderNo) orderIds.add(orderNo);
+    if (!campaignTitle && iCampaign >= 0 && row[iCampaign]) {
+      campaignTitle = String(row[iCampaign]).trim();
+    }
+
+    const name = iProduct >= 0 ? String(row[iProduct] == null ? '' : row[iProduct]).trim() : '';
+    if (!name) return;
+    const qty = Number(row[iQty]) || 0;
+    const price = Number(row[iPrice]) || 0;
+    if (!productMap.has(name)) productMap.set(name, { qty: 0, unitPrice: price });
+    const p = productMap.get(name);
+    p.qty += qty;
+    p.unitPrice = price;
+
+    if (iShipping >= 0 && row[iShipping] !== '' && row[iShipping] != null) {
+      shipping += Number(row[iShipping]) || 0;
+    }
+    if (iDiscount >= 0 && row[iDiscount] !== '' && row[iDiscount] != null) {
+      discount += Number(row[iDiscount]) || 0;
+    }
+  });
+
+  return {
+    title: campaignTitle,
+    orderCount: orderIds.size,
+    shipping,
+    discount,
+    skippedOrders: skippedOrderIds.size,
+    products: Array.from(productMap.entries()).map(([name, v]) => ({ name, qty: v.qty, unitPrice: v.unitPrice }))
+  };
+}
+
+document.getElementById('excel-file').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  const status = document.getElementById('excel-import-status');
+  status.style.color = '#888';
+  status.textContent = '解析中…';
+  try {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+    const sheetName = wb.SheetNames.find(n => n.trim().toUpperCase() === 'GBS') || wb.SheetNames[0];
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1, defval: '' });
+    const parsed = parseGBSSheet(rows);
+    if (!parsed.products.length) throw new Error('沒有解析到任何商品，請確認檔案內容');
+
+    if (parsed.title) document.getElementById('title-override').value = parsed.title;
+    document.getElementById('order-count').value = parsed.orderCount;
+    document.getElementById('shipping').value = parsed.shipping;
+    if (parsed.discount) document.getElementById('discount').value = parsed.discount;
+
+    state.products = parsed.products.map(p => ({
+      id: nextId++, name: p.name, qty: p.qty, unitPrice: p.unitPrice, costPrice: 0, overrideCost: false
+    }));
+
+    syncFromForm();
+    renderProductRows();
+    renderPreview();
+
+    let msg = `已匯入 ${parsed.products.length} 項商品，共 ${parsed.orderCount} 位訂購人`;
+    if (parsed.skippedOrders) msg += `（已排除 ${parsed.skippedOrders} 筆取消／退貨訂單）`;
+    msg += '。請確認分潤 % 後下載 PDF。';
+    status.style.color = '#2a8f4d';
+    status.textContent = msg;
+  } catch (err) {
+    status.style.color = '#dc2626';
+    status.textContent = '匯入失敗：' + err.message;
+    console.error(err);
+  }
+});
 
 // ── Event Listeners ───────────────────────────────────────────────────────────
 document.getElementById('form-body').addEventListener('input', () => {
