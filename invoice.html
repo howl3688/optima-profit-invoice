@@ -350,6 +350,7 @@ legend {
 .col-profit-cell { background-color: #FFE600; }
 .negative { color: #cc0000; }
 .row-gift td { background: #fafafa; }
+.row-spacer td { border-left: none; border-right: none; padding: 2px; height: 8px; }
 .row-shipping td { }
 .row-subtotal td, .row-shipping-footer td { background: #f5f5f5; font-weight: 700; }
 .row-total { font-weight: 700; background: #ececec; }
@@ -757,17 +758,32 @@ function fmtNeg(n) {
   if (!n) return '';
   return '($' + Number(n).toLocaleString('zh-TW') + ')';
 }
+// 進貨價：到小數點後一位，第二位後無條件捨去（無條件捨去＝無條件捨去、恆正）
+function truncate1(n) {
+  return Math.floor(Number(n) * 10 + 1e-6) / 10;
+}
+// 分潤金額／分潤總金額：四捨五入到整數
+function round0(n) {
+  return Math.round(Number(n));
+}
+function fmtMoney1(n) {
+  if (n === 0 || n === '' || n == null) return '';
+  return '$' + Math.abs(Number(n)).toLocaleString('zh-TW', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}
 
 function calcProduct(p) {
   const totalSales = num(p.qty) * num(p.unitPrice);
-  const costPerUnit = p.overrideCost
+  const rawCostPerUnit = p.overrideCost
     ? num(p.costPrice)
     : num(p.unitPrice) * (1 - state.profitPct / 100);
-  const effectiveCost = p.overrideCost
-    ? costPerUnit * num(p.qty)
+  const costPerUnit = truncate1(rawCostPerUnit);
+  const rawEffectiveCost = p.overrideCost
+    ? num(p.costPrice) * num(p.qty)
     : totalSales * (1 - state.profitPct / 100);
-  const totalProfit = totalSales - effectiveCost;
-  const profitPer = num(p.qty) ? totalProfit / num(p.qty) : 0;
+  const effectiveCost = truncate1(rawEffectiveCost);
+  const rawTotalProfit = totalSales - rawEffectiveCost;
+  const totalProfit = round0(rawTotalProfit);
+  const profitPer = num(p.qty) ? round0(rawTotalProfit / num(p.qty)) : 0;
   return { totalSales, profitPer, totalProfit, effectiveCost, costPerUnit };
 }
 
@@ -780,7 +796,7 @@ function calcTotals() {
     totalProfit += c.totalProfit;
   }
   subTotalSales -= num(state.discount);
-  totalProfit -= num(state.discount) * (state.profitPct / 100);
+  totalProfit -= round0(num(state.discount) * state.profitPct / 100);
   const totalSales = subTotalSales + num(state.shipping);
   return { totalQty, subTotalSales, totalSales, totalProfit };
 }
@@ -841,7 +857,7 @@ function renderPreview() {
       <td>${fmt(p.qty)}</td>
       <td>${fmtMoney(p.unitPrice)}</td>
       <td>${fmtMoney(c.totalSales)}</td>
-      <td class="col-cost">${fmtMoney(c.effectiveCost)}</td>
+      <td class="col-cost">${fmtMoney1(c.effectiveCost)}</td>
       <td>${fmtMoney(c.profitPer)}</td>
       <td class="col-profit-cell">${fmtMoney(c.totalProfit)}</td>
     </tr>`;
@@ -849,7 +865,7 @@ function renderPreview() {
 
 
   if (num(state.discount) > 0) {
-    const discountProfit = Math.round(num(state.discount) * state.profitPct / 100);
+    const discountProfit = round0(num(state.discount) * state.profitPct / 100);
     html += `<tr class="row-discount">
       <td>優惠折扣</td><td></td><td></td>
       <td class="negative">${fmtNeg(state.discount)}</td>
@@ -867,6 +883,9 @@ function renderPreview() {
       <td class="col-profit-cell"></td>
     </tr>`;
   });
+
+  // 產品（含贈品）與銷售金額列之間空一列
+  html += `<tr class="row-spacer"><td colspan="7">&nbsp;</td></tr>`;
 
   document.getElementById('table-body').innerHTML = html;
 
@@ -901,7 +920,7 @@ function renderProductRows() {
   container.innerHTML = '';
   state.products.forEach(p => {
     const c = calcProduct(p);
-    const autoCostDisplay = p.unitPrice ? Math.round(c.costPerUnit) : '';
+    const autoCostDisplay = p.unitPrice ? c.costPerUnit : '';
     const costVal = p.overrideCost ? (p.costPrice || '') : (autoCostDisplay || '');
     const isReadonly = !p.overrideCost;
 
@@ -1084,7 +1103,7 @@ document.getElementById('form-body').addEventListener('input', () => {
     if (!p.overrideCost) {
       const costInput = row.querySelector('.p-cost');
       if (costInput) {
-        costInput.value = p.unitPrice ? Math.round(c.costPerUnit) : '';
+        costInput.value = p.unitPrice ? c.costPerUnit : '';
       }
     }
     // Refresh profit hint
