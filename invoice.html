@@ -767,17 +767,15 @@ function fmtMoney1(n) {
 
 function calcProduct(p) {
   const totalSales = num(p.qty) * num(p.unitPrice);
+  // 先算「單品進貨價」並捨去到小數點後一位，再乘數量得出進貨價（列）與分潤總金額，
+  // 避免先用銷售總額去乘百分比、事後才捨去所造成的 1-2 元誤差。
   const rawCostPerUnit = p.overrideCost
     ? num(p.costPrice)
     : num(p.unitPrice) * (1 - state.profitPct / 100);
   const costPerUnit = truncate1(rawCostPerUnit);
-  const rawEffectiveCost = p.overrideCost
-    ? num(p.costPrice) * num(p.qty)
-    : totalSales * (1 - state.profitPct / 100);
-  const effectiveCost = truncate1(rawEffectiveCost);
-  const rawTotalProfit = totalSales - rawEffectiveCost;
-  const totalProfit = round0(rawTotalProfit);
-  const profitPer = num(p.qty) ? round0(rawTotalProfit / num(p.qty)) : 0;
+  const effectiveCost = truncate1(costPerUnit * num(p.qty));
+  const totalProfit = round0(totalSales - effectiveCost);
+  const profitPer = round0(num(p.unitPrice) - costPerUnit);
   return { totalSales, profitPer, totalProfit, effectiveCost, costPerUnit };
 }
 
