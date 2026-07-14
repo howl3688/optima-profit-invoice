@@ -151,6 +151,19 @@ legend {
 }
 .field-row { display: flex; gap: 8px; }
 .field-row .field { flex: 1; }
+.field-highlight {
+  background: #fff8dc;
+  border: 1.5px solid #f0c419;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-top: 8px;
+}
+.field-highlight label { color: #8a6d00; font-weight: 700; }
+.field-highlight input {
+  border-color: #f0c419;
+  background: #fffdf5;
+}
+.field-highlight input:focus { border-color: #d9a400; }
 
 /* Product rows */
 .product-row-header {
@@ -659,7 +672,7 @@ legend {
           <label>訂購人數</label>
           <input type="number" id="order-count" placeholder="0" min="0">
         </div>
-        <div class="field">
+        <div class="field field-highlight">
           <label>分潤 %（全域）</label>
           <div style="display:flex;align-items:center;gap:4px">
             <input type="number" id="profit-pct" placeholder="例：15" min="0" max="100" step="0.1" style="width:70px;text-align:right">
