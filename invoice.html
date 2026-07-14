@@ -752,13 +752,17 @@ function fmtNeg(n) {
   if (!n) return '';
   return '($' + Number(n).toLocaleString('zh-TW') + ')';
 }
-// 進貨價：到小數點後一位，第二位後無條件捨去（無條件捨去＝無條件捨去、恆正）
-function truncate1(n) {
-  return Math.floor(Number(n) * 10 + 1e-6) / 10;
+// 會計公式表全程用完整精度計算，只在儲存格「顯示」時四捨五入，不能先捨去/四捨五入
+// 中間值再拿去做下一步運算。先清除 IEEE754 浮點誤差（例如 99*0.85 在 JS 會變成
+// 84.14999999999999），再四捨五入到指定小數位，才會跟 Excel 顯示的結果一致。
+function clean(n) {
+  return Math.round(Number(n) * 1e6) / 1e6;
 }
-// 分潤金額／分潤總金額：四捨五入到整數
+function round1(n) {
+  return Math.round(clean(n) * 10) / 10;
+}
 function round0(n) {
-  return Math.round(Number(n));
+  return Math.round(clean(n));
 }
 function fmtMoney1(n) {
   if (n === 0 || n === '' || n == null) return '';
@@ -767,33 +771,34 @@ function fmtMoney1(n) {
 
 function calcProduct(p) {
   const totalSales = num(p.qty) * num(p.unitPrice);
-  // 「進貨價」欄位是單品（非整列）金額。先算單品分潤金額並捨去到小數點後一位，
-  // 再用「銷售金額－捨去後的分潤金額」反推進貨價；分潤總金額＝捨去後的單品分潤金額×數量再四捨五入。
-  let costPerUnit, profitPerUnitTrunc;
-  if (p.overrideCost) {
-    costPerUnit = truncate1(num(p.costPrice));
-    profitPerUnitTrunc = truncate1(num(p.unitPrice) - costPerUnit);
-  } else {
-    const rawProfitPerUnit = num(p.unitPrice) * (state.profitPct / 100);
-    profitPerUnitTrunc = truncate1(rawProfitPerUnit);
-    costPerUnit = truncate1(num(p.unitPrice) - profitPerUnitTrunc);
-  }
-  const totalProfit = round0(profitPerUnitTrunc * num(p.qty));
-  const profitPer = round0(profitPerUnitTrunc);
-  return { totalSales, profitPer, totalProfit, costPerUnit };
+  // 進貨價＝單價×(1-分潤%)；分潤金額＝單價－進貨價（用未捨去的完整精度進貨價）；
+  // 分潤總金額＝數量×分潤金額（同樣用完整精度）。三者都各自獨立四捨五入顯示。
+  const rawCostPerUnit = p.overrideCost
+    ? num(p.costPrice)
+    : num(p.unitPrice) * (1 - state.profitPct / 100);
+  const rawProfitPerUnit = num(p.unitPrice) - rawCostPerUnit;
+  const rawTotalProfit = num(p.qty) * rawProfitPerUnit;
+  return {
+    totalSales,
+    costPerUnit: round1(rawCostPerUnit),
+    profitPer: round0(rawProfitPerUnit),
+    totalProfit: round0(rawTotalProfit),
+    rawTotalProfit
+  };
 }
 
 function calcTotals() {
-  let totalQty = 0, subTotalSales = 0, totalProfit = 0;
+  let totalQty = 0, subTotalSales = 0, rawTotalProfit = 0;
   for (const p of state.products) {
     const c = calcProduct(p);
     totalQty += num(p.qty);
     subTotalSales += c.totalSales;
-    totalProfit += c.totalProfit;
+    rawTotalProfit += c.rawTotalProfit;
   }
   subTotalSales -= num(state.discount);
-  totalProfit -= round0(num(state.discount) * state.profitPct / 100);
+  rawTotalProfit -= num(state.discount) * (state.profitPct / 100);
   const totalSales = subTotalSales + num(state.shipping);
+  const totalProfit = round0(rawTotalProfit);
   return { totalQty, subTotalSales, totalSales, totalProfit };
 }
 
