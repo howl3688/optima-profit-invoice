@@ -1292,10 +1292,30 @@ const PAGE_H = 794;
 const SCALE_FLOOR = 0.74; // 字級/行高下限，不再往下縮
 const MAX_ITEMS_PER_PAGE = 15; // Howl 定案：單頁品項上限
 
+// 復位：上一輪 paginate() 可能把 tfoot 列（含 #out-order-count 等輸出節點）與
+// #doc-footer 的「真節點」搬進續頁 .doc-page-extra。在刪除續頁前先把它們搬回
+// #preview-doc，否則刪續頁會連這些真節點一起銷毀，導致下一次 render 找不到節點而崩潰。
+function restoreDocNodes(doc, pagesEl) {
+  const homeTfoot = doc.querySelector('#main-table tfoot');
+  if (homeTfoot) {
+    // 依原始順序把 4 列搬回原表 tfoot（appendChild 會同時完成復位與排序）
+    ['row-subtotal', 'row-shipping-footer', 'row-total', 'row-order-count'].forEach(cls => {
+      const row = pagesEl.querySelector('tr.' + cls);
+      if (row) homeTfoot.appendChild(row);
+    });
+  }
+  // 頁尾（#doc-footer）復位回文件末尾（原本就是 #preview-doc 的最後一個子節點）
+  const footer = document.getElementById('doc-footer');
+  if (footer && footer.parentNode !== doc) doc.appendChild(footer);
+}
+
 function layoutPreview() {
   const pagesEl = document.getElementById('preview-pages');
   const doc = document.getElementById('preview-doc');
   const tbody = doc.querySelector('#table-body');
+
+  // 先把上一輪搬進續頁的 tfoot/頁尾真節點復位，再清掉續頁（順序不可調換）
+  restoreDocNodes(doc, pagesEl);
 
   // 清掉先前產生的第 2+ 頁
   pagesEl.querySelectorAll('.doc-page-extra').forEach(el => el.remove());
