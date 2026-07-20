@@ -256,8 +256,17 @@ legend {
   /* width/height set dynamically by scalePreview() */
 }
 
-/* ── Document ── */
-#preview-doc {
+/* ── Document pages ── */
+/* #preview-pages holds one or more .doc-page (A4 橫式) stacked vertically;
+   scalePreview() scales this whole stack to fit the panel. */
+#preview-pages {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+}
+.doc-page {
+  --s: 1; /* 內容縮放比例，품項多到單頁塞不下時由 JS 動態調降；≤ 目前塞得下時維持 1（原樣不縮） */
   width: 1123px;
   height: 794px;
   overflow: hidden;
@@ -269,10 +278,13 @@ legend {
   flex-direction: column;
   font-family: 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC', 'Apple LiGothic Medium', sans-serif;
   color: #000;
-  position: absolute;
-  top: 0;
-  left: 0;
-  transform-origin: top left;
+  margin-bottom: 18px;
+}
+.doc-page:last-child { margin-bottom: 0; }
+.doc-page-continued {
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 4px;
 }
 
 /* Doc header */
@@ -280,7 +292,7 @@ legend {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 6px;
+  margin-bottom: calc(6px * var(--s));
 }
 #logo-circle {
   width: 52px;
@@ -292,10 +304,10 @@ legend {
 }
 #doc-title {
   background-color: #FFE600;
-  font-size: 15px;
+  font-size: calc(15px * var(--s));
   font-weight: 700;
-  padding: 7px 12px;
-  min-height: 36px;
+  padding: calc(7px * var(--s)) 12px;
+  min-height: calc(36px * var(--s));
   display: flex;
   align-items: center;
   word-break: break-all;
@@ -307,55 +319,55 @@ legend {
   font-weight: 400;
 }
 
-/* Main table */
-#table-wrap {
+/* Main table (#main-table＝第1頁；.main-table-cont＝分頁時第2+頁的續表，樣式共用) */
+#table-wrap, .table-wrap {
   overflow: hidden;
 }
-#main-table {
+#main-table, .main-table-cont {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 0;
-  font-size: 12px;
+  font-size: calc(12px * var(--s));
   table-layout: fixed;
 }
-#main-table colgroup col:nth-child(1) { width: 34%; }
-#main-table colgroup col:nth-child(2) { width: 9%; }
-#main-table colgroup col:nth-child(3) { width: 10%; }
-#main-table colgroup col:nth-child(4) { width: 12%; }
-#main-table colgroup col:nth-child(5) { width: 11%; }
-#main-table colgroup col:nth-child(6) { width: 10%; }
-#main-table colgroup col:nth-child(7) { width: 14%; }
+#main-table colgroup col:nth-child(1), .main-table-cont colgroup col:nth-child(1) { width: 34%; }
+#main-table colgroup col:nth-child(2), .main-table-cont colgroup col:nth-child(2) { width: 9%; }
+#main-table colgroup col:nth-child(3), .main-table-cont colgroup col:nth-child(3) { width: 10%; }
+#main-table colgroup col:nth-child(4), .main-table-cont colgroup col:nth-child(4) { width: 12%; }
+#main-table colgroup col:nth-child(5), .main-table-cont colgroup col:nth-child(5) { width: 11%; }
+#main-table colgroup col:nth-child(6), .main-table-cont colgroup col:nth-child(6) { width: 10%; }
+#main-table colgroup col:nth-child(7), .main-table-cont colgroup col:nth-child(7) { width: 14%; }
 
-#main-table th, #main-table td {
+#main-table th, #main-table td, .main-table-cont th, .main-table-cont td {
   border: 1px solid #000;
-  padding: 3px 5px;
+  padding: calc(3px * var(--s)) 5px;
   text-align: center;
   vertical-align: middle;
   word-break: break-all;
 }
-#main-table th:first-child,
-#main-table td:first-child {
+#main-table th:first-child, #main-table td:first-child,
+.main-table-cont th:first-child, .main-table-cont td:first-child {
   text-align: left;
   padding-left: 6px;
 }
-#main-table thead th {
+#main-table thead th, .main-table-cont thead th {
   font-weight: 700;
-  font-size: 12px;
+  font-size: calc(12px * var(--s));
   background: #fff;
 }
-#main-table thead th.col-profit {
+#main-table thead th.col-profit, .main-table-cont thead th.col-profit {
   background-color: #FFE600;
 }
 .col-cost { color: #cc0000; }
 .col-profit-cell { background-color: #FFE600; }
 .negative { color: #cc0000; }
 .row-gift td { background: #fafafa; }
-.row-spacer td { border-left: none; border-right: none; padding: 2px; height: 8px; }
+.row-spacer td { border-left: none; border-right: none; padding: calc(2px * var(--s)); height: calc(8px * var(--s)); }
 .row-shipping td { }
 .row-subtotal td, .row-shipping-footer td { background: #f5f5f5; font-weight: 700; }
 .row-total { font-weight: 700; background: #ececec; }
 .row-total td.col-profit-cell { background-color: #FFE600; }
-.row-order-count td { text-align: center; padding: 4px 0; font-size: 15px; background: #f5f5f5; }
+.row-order-count td { text-align: center; padding: calc(4px * var(--s)) 0; font-size: calc(15px * var(--s)); background: #f5f5f5; }
 
 /* Product row number */
 .row-num { color: #999; margin-right: 2px; }
@@ -379,23 +391,23 @@ legend {
   width: auto;
   display: flex;
   flex-direction: column;
-  padding: 8px 10px;
-  gap: 6px;
+  padding: calc(8px * var(--s)) 10px;
+  gap: calc(6px * var(--s));
 }
 #payment-notes {
-  padding: 8px 10px;
-  font-size: 11px;
+  padding: calc(8px * var(--s)) 10px;
+  font-size: calc(11px * var(--s));
   line-height: 1.6;
   border-bottom: 1px solid #000;
 }
 #bank-table {
   width: 100%;
-  font-size: 11px;
+  font-size: calc(11px * var(--s));
   border-collapse: collapse;
   flex: 1;
 }
 #bank-table td {
-  padding: 4px 8px;
+  padding: calc(4px * var(--s)) 8px;
   border-bottom: 1px solid #ddd;
   vertical-align: top;
 }
@@ -412,25 +424,26 @@ legend {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding-top: 8px;
+  padding-top: calc(8px * var(--s));
 }
 #customer-sig {
-  font-size: 13px;
+  font-size: calc(13px * var(--s));
   font-weight: 700;
   text-align: center;
   letter-spacing: 0.12em;
   color: #000;
 }
 #company-info {
-  font-size: 10px;
+  font-size: calc(10px * var(--s));
   line-height: 1.85;
   color: #000;
 }
 #company-info p { margin: 0; }
 #stamp-area {
   flex: 1;
-  margin-top: 6px;
+  margin-top: calc(6px * var(--s));
 }
+#stamp-area img { width: calc(66% * var(--s)) !important; object-fit: contain; display: block; margin: 0 auto; }
 
 /* ── Company Toggle ── */
 #company-toggle {
@@ -579,7 +592,8 @@ legend {
 <!-- ── Right: Preview Panel ── -->
 <div id="preview-panel">
   <div id="preview-wrapper">
-  <div id="preview-doc">
+  <div id="preview-pages">
+  <div id="preview-doc" class="doc-page">
 
     <!-- Header: logo + title -->
     <div id="doc-header">
@@ -666,6 +680,7 @@ legend {
     </div><!-- /doc-footer -->
 
   </div><!-- /preview-doc -->
+  </div><!-- /preview-pages -->
   </div><!-- /preview-wrapper -->
 </div>
 
@@ -925,6 +940,9 @@ function renderPreview() {
   document.getElementById('bk-contact-person').textContent= bk.contactPerson;
   document.getElementById('bk-contact-phone').textContent = bk.contactPhone;
   document.getElementById('bk-contact-address').textContent=bk.contactAddress;
+
+  layoutPreview();
+  scalePreview();
 }
 
 function escHtml(s) {
@@ -1211,23 +1229,27 @@ document.getElementById('download-pdf').addEventListener('click', async () => {
   btn.disabled = true;
   btn.textContent = '產生中，請稍候…';
 
-  const doc = document.getElementById('preview-doc');
-  doc.style.transform = 'scale(1)';
+  const pagesEl = document.getElementById('preview-pages');
+  const prevTransform = pagesEl.style.transform;
+  pagesEl.style.transform = 'none';
   try {
-    const canvas = await html2canvas(doc, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      logging: false,
-      width: 1123,
-      height: 794
-    });
-
-    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const pageEls = Array.from(document.querySelectorAll('#preview-pages .doc-page'));
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
 
-    pdf.addImage(imgData, 'JPEG', 0, 0, 297, 210);
+    for (let i = 0; i < pageEls.length; i++) {
+      const canvas = await html2canvas(pageEls[i], {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: 1123,
+        height: 794
+      });
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      if (i > 0) pdf.addPage('a4', 'landscape');
+      pdf.addImage(imgData, 'JPEG', 0, 0, 297, 210);
+    }
 
     const fileName = (state.title || '分潤對帳單').replace(/[\/\\:*?"<>|]/g, '_');
     pdf.save(fileName + '.pdf');
@@ -1235,6 +1257,7 @@ document.getElementById('download-pdf').addEventListener('click', async () => {
     alert('PDF 產生失敗，請確認網路連線（需載入 CDN 套件）。\n' + err.message);
     console.error(err);
   } finally {
+    pagesEl.style.transform = prevTransform;
     scalePreview();
     btn.disabled = false;
     btn.textContent = '⬇ 下載 PDF';
@@ -1251,15 +1274,198 @@ document.getElementById('company-toggle').addEventListener('click', e => {
 function scalePreview() {
   const panel = document.getElementById('preview-panel');
   const wrapper = document.getElementById('preview-wrapper');
-  const doc = document.getElementById('preview-doc');
+  const pagesEl = document.getElementById('preview-pages');
   const pw = panel.clientWidth - 40;
   const ph = panel.clientHeight - 40;
-  const scale = Math.min(pw / 1123, ph / 794);
-  doc.style.transform = 'scale(' + scale + ')';
+  const totalH = pagesEl.scrollHeight; // 疊好的所有頁面總高（未縮放）
+  const scale = Math.min(pw / 1123, ph / totalH);
+  pagesEl.style.transform = 'scale(' + scale + ')';
   wrapper.style.width = Math.round(1123 * scale) + 'px';
-  wrapper.style.height = Math.round(794 * scale) + 'px';
+  wrapper.style.height = Math.round(totalH * scale) + 'px';
 }
 window.addEventListener('resize', scalePreview);
+
+// ── Preview pagination / auto-fit ───────────────────────────────────────────
+// 品項 ≤15：自動縮字級/行高塞進單頁；> 15（Howl 定案的單頁上限）：
+// 第 16 項起強制移到第二頁（不靠硬縮塞爆），訂購人數＋頁尾整塊跟著搬到有空間的那一頁，不遺失。
+const PAGE_H = 794;
+const SCALE_FLOOR = 0.74; // 字級/行高下限，不再往下縮
+const MAX_ITEMS_PER_PAGE = 15; // Howl 定案：單頁品項上限
+
+function layoutPreview() {
+  const pagesEl = document.getElementById('preview-pages');
+  const doc = document.getElementById('preview-doc');
+  const tbody = doc.querySelector('#table-body');
+
+  // 清掉先前產生的第 2+ 頁
+  pagesEl.querySelectorAll('.doc-page-extra').forEach(el => el.remove());
+  doc.style.setProperty('--s', 1);
+  doc.style.height = 'auto';
+  doc.style.overflow = 'visible';
+
+  // 品項（商品列，不含贈品/優惠折扣/空白列）超過上限 → 第 16 項起強制搬到下一頁，
+  // 不嘗試硬縮塞在同一頁（避免縮到看不清）
+  let forcedOverflowRows = [];
+  if (state.products.length > MAX_ITEMS_PER_PAGE) {
+    const rows = Array.from(tbody.children);
+    forcedOverflowRows = rows.slice(MAX_ITEMS_PER_PAGE);
+    forcedOverflowRows.forEach(r => r.remove());
+  }
+
+  const naturalH = doc.scrollHeight;
+
+  if (forcedOverflowRows.length === 0 && naturalH <= PAGE_H) {
+    // 塞得下，維持原樣（不縮放）——少項不退步
+    doc.style.height = PAGE_H + 'px';
+    doc.style.overflow = 'hidden';
+    return;
+  }
+
+  if (forcedOverflowRows.length === 0) {
+    // 二分搜尋在 [SCALE_FLOOR, 1] 之間找出最大、仍塞得進單頁的縮放比例
+    let lo = SCALE_FLOOR, hi = 1;
+    for (let i = 0; i < 12; i++) {
+      const mid = (lo + hi) / 2;
+      doc.style.setProperty('--s', mid);
+      if (doc.scrollHeight <= PAGE_H) lo = mid; else hi = mid;
+    }
+    doc.style.setProperty('--s', lo);
+
+    if (doc.scrollHeight <= PAGE_H) {
+      doc.style.height = PAGE_H + 'px';
+      doc.style.overflow = 'hidden';
+      return;
+    }
+    // 縮到下限仍塞不下（極端情況，如品名超長換多行）→ 交給 paginate() 用逐列塞頁邏輯處理
+    doc.style.setProperty('--s', SCALE_FLOOR);
+    paginate(doc, pagesEl, [], false);
+    return;
+  }
+
+  // 已知超過上限一定要分頁：page1 只放前 15 品項（不含頁尾/合計），
+  // 先試著讓這 15 項盡量維持原樣（不必縮到下限），縮放同樣走二分搜尋但不含頁尾/合計
+  let lo = SCALE_FLOOR, hi = 1;
+  for (let i = 0; i < 12; i++) {
+    const mid = (lo + hi) / 2;
+    doc.style.setProperty('--s', mid);
+    if (doc.scrollHeight <= PAGE_H) lo = mid; else hi = mid;
+  }
+  doc.style.setProperty('--s', lo);
+  if (doc.scrollHeight > PAGE_H) doc.style.setProperty('--s', SCALE_FLOOR);
+
+  paginate(doc, pagesEl, forcedOverflowRows, true);
+}
+
+function createContinuationPage(withTable, scale) {
+  const page = document.createElement('div');
+  page.className = 'doc-page doc-page-extra';
+  page.style.setProperty('--s', scale);
+  page.style.height = 'auto';
+  page.style.overflow = 'visible';
+  const label = document.createElement('div');
+  label.className = 'doc-page-continued';
+  label.textContent = '（續上頁）';
+  page.appendChild(label);
+  if (withTable) {
+    const wrap = document.createElement('div');
+    wrap.className = 'table-wrap';
+    const table = document.createElement('table');
+    table.className = 'main-table-cont';
+    const theadSrc = document.querySelector('#preview-doc #main-table thead');
+    const colgroupSrc = document.querySelector('#preview-doc #main-table colgroup');
+    table.appendChild(colgroupSrc.cloneNode(true));
+    table.appendChild(theadSrc.cloneNode(true));
+    const tbody = document.createElement('tbody');
+    tbody.className = 'cont-table-body';
+    table.appendChild(tbody);
+    const tfoot = document.createElement('tfoot');
+    tfoot.className = 'cont-tfoot';
+    table.appendChild(tfoot);
+    wrap.appendChild(table);
+    page.appendChild(wrap);
+  }
+  return page;
+}
+
+function paginate(doc, pagesEl, forcedOverflowRows, hardCapped) {
+  const tbody = doc.querySelector('#table-body');
+  const tfoot = doc.querySelector('#main-table tfoot');
+  const footerDiv = doc.querySelector('#doc-footer');
+
+  const tfootRows = Array.from(tfoot.children);
+  tfootRows.forEach(r => r.remove());
+  footerDiv.remove();
+
+  const pages = [doc];
+  let activeDoc, activeTbody, rowQueue;
+
+  if (hardCapped) {
+    // page1（doc）維持目前已經放好的最多 15 品項不動、不再塞更多列；
+    // 溢出的品項／贈品／優惠折扣列 + 合計 + 頁尾全部另起新頁（用縮放下限，維持一致觀感）
+    doc.style.height = PAGE_H + 'px';
+    doc.style.overflow = 'hidden';
+    const page = createContinuationPage(true, SCALE_FLOOR);
+    pagesEl.appendChild(page);
+    pages.push(page);
+    activeDoc = page;
+    activeTbody = page.querySelector('.cont-table-body');
+    rowQueue = forcedOverflowRows.slice();
+  } else {
+    doc.style.height = 'auto';
+    doc.style.overflow = 'visible';
+    rowQueue = Array.from(tbody.children);
+    tbody.innerHTML = '';
+    activeDoc = doc;
+    activeTbody = tbody;
+  }
+
+  function fits() { return activeDoc.scrollHeight <= PAGE_H; }
+
+  while (rowQueue.length) {
+    const row = rowQueue.shift();
+    activeTbody.appendChild(row);
+    if (!fits()) {
+      activeTbody.removeChild(row);
+      const page = createContinuationPage(true, SCALE_FLOOR);
+      pagesEl.appendChild(page);
+      pages.push(page);
+      activeDoc = page;
+      activeTbody = page.querySelector('.cont-table-body');
+      activeTbody.appendChild(row); // 單列在下限縮放下理論上一定塞得下
+    }
+  }
+
+  // 訂購人數/小計/總計（tfoot）跟著搬到目前這頁，塞不下就整塊搬下一頁
+  let tfootTarget = (activeDoc === doc)
+    ? doc.querySelector('#main-table tfoot')
+    : activeDoc.querySelector('.cont-tfoot');
+  tfootRows.forEach(r => tfootTarget.appendChild(r));
+  if (!fits()) {
+    tfootRows.forEach(r => r.remove());
+    const page = createContinuationPage(true, SCALE_FLOOR);
+    pagesEl.appendChild(page);
+    pages.push(page);
+    activeDoc = page;
+    tfootTarget = page.querySelector('.cont-tfoot');
+    tfootRows.forEach(r => tfootTarget.appendChild(r));
+  }
+
+  // 頁尾（簽回／加壹資訊／發票章／匯款欄）跟著搬到目前這頁，塞不下就整塊搬下一頁
+  activeDoc.appendChild(footerDiv);
+  if (!fits()) {
+    footerDiv.remove();
+    const page = createContinuationPage(false, SCALE_FLOOR);
+    pagesEl.appendChild(page);
+    pages.push(page);
+    activeDoc = page;
+    activeDoc.appendChild(footerDiv);
+  }
+
+  pages.forEach((p, i) => {
+    p.style.height = PAGE_H + 'px';
+    p.style.overflow = 'hidden';
+  });
+}
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 (function init() {
