@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIMPOS 銷售整理 · 奧提瑪工具箱</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--accent:#4A90D9;--accent-d:#3a7ab8;--dark:#1a1a2e;--ink:#222;--mut:#888;--line:#e5e7eb;--bg:#f0f2f5}
+  body{font-family:'PingFang TC','Microsoft JhengHei','Noto Sans TC',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+  #pw-screen{position:fixed;inset:0;background:var(--dark);display:flex;align-items:center;justify-content:center;z-index:9999}
+  #pw-screen.hide{display:none}
+  .pw-box{background:#fff;border-radius:16px;padding:44px 36px;width:320px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+  .pw-ic{width:60px;height:60px;border-radius:14px;background:var(--accent);margin:0 auto 18px;display:flex;align-items:center;justify-content:center;font-size:28px}
+  .pw-box h2{font-size:18px;margin-bottom:6px;color:var(--dark)}
+  .pw-box p{font-size:13px;color:#888;margin-bottom:20px}
+  .pw-box input{width:100%;padding:12px;border:2px solid var(--line);border-radius:8px;font-size:16px;text-align:center;letter-spacing:3px;outline:none;font-family:inherit}
+  .pw-box input:focus{border-color:var(--accent)}
+  .pw-box button{margin-top:14px;width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+  .pw-box button:hover{background:var(--accent-d)}
+  .pw-err{color:#c33;font-size:13px;margin-top:10px;min-height:18px}
+  header{background:var(--dark);height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:20}
+  .h-l{display:flex;align-items:center;gap:12px;color:#fff;font-weight:700;font-size:17px}
+  .h-l .ic{width:34px;height:34px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:18px}
+  .back{color:#bbb;text-decoration:none;font-size:13px;border:1px solid #3a3a52;padding:7px 13px;border-radius:8px;transition:.15s}
+  .back:hover{color:#fff;border-color:#fff}
+  main{max-width:1080px;margin:0 auto;padding:24px 20px 60px}
+  .card{background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 14px rgba(0,0,0,.06);margin-bottom:18px}
+  .card h2{font-size:16px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+  .card .sub{font-size:12.5px;color:var(--mut);margin-bottom:16px;line-height:1.6}
+  .drop{border:2.5px dashed var(--line);border-radius:14px;padding:44px 20px;text-align:center;cursor:pointer;transition:.15s;background:#fafbfc}
+  .drop:hover,.drop.over{border-color:var(--accent);background:#f4f9fe}
+  .drop .e{font-size:40px;display:block;margin-bottom:10px}
+  .drop .t{font-size:15px;font-weight:700;color:var(--dark);margin-bottom:5px}
+  .drop .s{font-size:12.5px;color:var(--mut)}
+  .drop.has{border-style:solid;border-color:#b6e6c8;background:#f4fdf7}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0}
+  .chip{font-size:12.5px;padding:6px 12px;border-radius:20px;background:#f3f4f6;color:#555}
+  .chip b{color:var(--dark)}
+  .chip.ok{background:#eafbf0;color:#1a8a4a}
+  .chip.warn{background:#fff4e0;color:#b8791a}
+  .btn{margin-top:18px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:14px 26px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:.15s}
+  .btn:hover{background:var(--accent-d)}
+  .btn:disabled{background:#ccd2d8;cursor:not-allowed}
+  .msg{margin-top:14px;padding:12px 14px;border-radius:10px;font-size:13.5px;line-height:1.7;display:none}
+  .msg.err{display:block;background:#fdecec;border:1px solid #f5b5b5;color:#b12}
+  .msg.ok{display:block;background:#eafbf0;border:1px solid #b6e6c8;color:#1a7a42}
+  .msg.warn{display:block;background:#fff8e8;border:1px solid #f0d9a8;color:#8a6516}
+  .msg b{font-weight:800}
+  .tbl-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--line);max-height:460px}
+  table{border-collapse:collapse;font-size:12.5px;white-space:nowrap}
+  thead th{background:#f7f8fa;position:sticky;top:0;padding:8px 10px;font-size:11px;color:#666;font-weight:700;border-bottom:1px solid var(--line);border-right:1px solid #eee;text-align:center}
+  td{padding:6px 10px;border-top:1px solid #f2f2f2;border-right:1px solid #f7f7f7;text-align:center;color:#555}
+  td.l{text-align:left}
+  td.n{font-weight:700;color:var(--dark)}
+  tr:hover td{background:#fafbfc}
+  .cnt{font-size:12px;color:var(--mut);margin:0 2px 12px}
+  ol.help{margin:0 0 0 18px;font-size:13.5px;line-height:2;color:#555}
+  ol.help b{color:var(--dark)}
+  .foot{text-align:center;color:#bbb;font-size:11.5px;margin-top:8px}
+</style>
+</head>
+<body>
+<div id="pw-screen">
+  <div class="pw-box">
+    <div class="pw-ic">📊</div>
+    <h2>SIMPOS 銷售整理</h2>
+    <p>請輸入工具箱密碼</p>
+    <input type="password" id="pw-input" placeholder="••••••" maxlength="20" autocomplete="off"
+      onkeydown="if(event.key==='Enter')checkPw()">
+    <button onclick="checkPw()">進入</button>
+    <div class="pw-err" id="pw-error"></div>
+  </div>
+</div>
+<header>
+  <div class="h-l"><span class="ic">📊</span>SIMPOS 銷售整理</div>
+  <a class="back" href="index.html">← 回工具箱</a>
+</header>
+
+<main>
+  <div class="card">
+    <h2>① 丟進 SIMPOS 原始檔</h2>
+    <p class="sub">POS 後台匯出的「訂單明細」<b>.xlsx</b> 原檔，不用先整理。檔案只在你的瀏覽器裡處理，<b>不會上傳到任何伺服器</b>。</p>
+    <div class="drop" id="drop">
+      <span class="e">📥</span>
+      <div class="t">把檔案拖進來，或點這裡選檔</div>
+      <div class="s">支援 SIMPOS 匯出的 .xlsx</div>
+    </div>
+    <input type="file" id="file" accept=".xlsx" style="display:none">
+    <div class="chips" id="chips"></div>
+    <div class="msg" id="msg"></div>
+    <button class="btn" id="go" disabled>⬇️ 下載整理後的 Excel</button>
+  </div>
+
+  <div class="card" id="pv-card" style="display:none">
+    <h2>② 預覽</h2>
+    <p class="sub">下載的檔案會保留完整版型（官網價列、兩層表頭、BD 與付款方式下拉、框線）。<b>BD 欄留空</b>，下載後自己填。</p>
+    <div class="cnt" id="cnt"></div>
+    <div class="tbl-wrap"><table id="pv"></table></div>
+  </div>
+
+  <div class="card">
+    <h2>③ 它做了什麼</h2>
+    <ol class="help">
+      <li>同一張訂單的多筆品項<b>併成一列</b>，依<b>日期、取單號碼由小到大</b>排。</li>
+      <li>「手動折扣」列不計入品項數量；<b>金額取「總金額」</b>（已扣折扣的實收）。</li>
+      <li>付款方式 <code>TAPPAY_PHONE***</code> → <b>Tappay</b>、<code>現金***</code> → <b>現金</b>。</li>
+      <li>柑橘咖啡酒 → <b>苦盡柑來</b>欄；2入茶韻禮盒 → <b>茶韻禮盒</b>；單瓶大禮盒組(馬頭酒塞) → <b>奔馬禮盒</b>；【長流】→ <b>長流</b>欄。</li>
+      <li>香米清酒<b>(6入)</b> 自動拆成 <b>6</b> 瓶。</li>
+      <li>發票跳號（作廢）<b>不補列</b>，只列有訂單的。</li>
+      <li>認不出來的品項會在上面<b>橘色警示</b>列出來——看到就回報，別直接用。</li>
+    </ol>
+  </div>
+  <div class="foot" id="foot"></div>
+</main>
+
+<script>
+// 自帶登入：沿用工具箱同一組密碼（同 hash）。直達連結也能用；已在工具箱登入過則免再輸。
+const PW_HASH='b74583d0f9d2a4a4f89963602faa42a2c6e5b50dd030431b20388f09406aaa3e';
+async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+async function checkPw(){
+  const v=document.getElementById('pw-input').value;
+  if(await sha256(v)===PW_HASH){sessionStorage.setItem('pw_ok','1');document.getElementById('pw-screen').classList.add('hide');}
+  else{document.getElementById('pw-error').textContent='密碼錯誤，請再試一次';document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();}
+}
+if(sessionStorage.getItem('pw_ok')==='1'){document.getElementById('pw-screen').classList.add('hide');}
+else{setTimeout(()=>{const el=document.getElementById('pw-input');if(el)el.focus();},100);}
+</script>
+
+<script>
+const TPL_B64='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';
+/* ===== SIMPOS 銷售整理 · 核心邏輯（無外部相依）===== */
+
+/* ---------- ZIP 讀（原生 DecompressionStream）---------- */
+async function unzip(buf){
+  const dv=new DataView(buf), u8=new Uint8Array(buf);
+  let eocd=-1;
+  for(let i=u8.length-22;i>=0;i--){ if(dv.getUint32(i,true)===0x06054b50){eocd=i;break;} }
+  if(eocd<0) throw new Error('不是有效的 xlsx 檔');
+  const n=dv.getUint16(eocd+10,true); let off=dv.getUint32(eocd+16,true);
+  const out={};
+  for(let k=0;k<n;k++){
+    if(dv.getUint32(off,true)!==0x02014b50) throw new Error('ZIP 目錄毀損');
+    const method=dv.getUint16(off+10,true), csize=dv.getUint32(off+20,true);
+    const nlen=dv.getUint16(off+28,true), elen=dv.getUint16(off+30,true), clen=dv.getUint16(off+32,true);
+    const lho=dv.getUint32(off+42,true);
+    const name=new TextDecoder().decode(u8.subarray(off+46,off+46+nlen));
+    const lnlen=dv.getUint16(lho+26,true), lelen=dv.getUint16(lho+28,true);
+    const start=lho+30+lnlen+lelen;
+    const raw=u8.subarray(start,start+csize);
+    out[name]= method===0 ? Promise.resolve(raw) : inflateRaw(raw);
+    off+=46+nlen+elen+clen;
+  }
+  for(const k of Object.keys(out)) out[k]=await out[k];
+  return out;
+}
+async function inflateRaw(bytes){
+  const ds=new DecompressionStream('deflate-raw');
+  const ab=await new Response(new Blob([bytes]).stream().pipeThrough(ds)).arrayBuffer();
+  return new Uint8Array(ab);
+}
+
+/* ---------- ZIP 寫（STORED，Excel 可讀）---------- */
+const CRC_T=(()=>{const t=new Uint32Array(256);for(let i=0;i<256;i++){let c=i;for(let j=0;j<8;j++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[i]=c>>>0;}return t;})();
+function crc32(u8){let c=0xFFFFFFFF;for(let i=0;i<u8.length;i++)c=CRC_T[(c^u8[i])&0xFF]^(c>>>8);return (c^0xFFFFFFFF)>>>0;}
+function zip(files){
+  const enc=new TextEncoder(), parts=[], central=[]; let off=0;
+  for(const [name,data] of files){
+    const nb=enc.encode(name), crc=crc32(data), sz=data.length;
+    const lh=new Uint8Array(30+nb.length), dv=new DataView(lh.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0x0800,true);
+    dv.setUint16(8,0,true); dv.setUint16(10,0,true); dv.setUint16(12,0x21,true);
+    dv.setUint32(14,crc,true); dv.setUint32(18,sz,true); dv.setUint32(22,sz,true);
+    dv.setUint16(26,nb.length,true); dv.setUint16(28,0,true); lh.set(nb,30);
+    parts.push(lh,data);
+    const ch=new Uint8Array(46+nb.length), cv=new DataView(ch.buffer);
+    cv.setUint32(0,0x02014b50,true); cv.setUint16(4,20,true); cv.setUint16(6,20,true);
+    cv.setUint16(8,0x0800,true); cv.setUint16(10,0,true);
+    cv.setUint16(12,0,true); cv.setUint16(14,0x21,true);
+    cv.setUint32(16,crc,true); cv.setUint32(20,sz,true); cv.setUint32(24,sz,true);
+    cv.setUint16(28,nb.length,true); cv.setUint32(42,off,true); ch.set(nb,46);
+    central.push(ch); off+=lh.length+sz;
+  }
+  const cdSize=central.reduce((a,b)=>a+b.length,0);
+  const eo=new Uint8Array(22), ev=new DataView(eo.buffer);
+  ev.setUint32(0,0x06054b50,true); ev.setUint16(8,files.length,true); ev.setUint16(10,files.length,true);
+  ev.setUint32(12,cdSize,true); ev.setUint32(16,off,true);
+  const total=off+cdSize+22, out=new Uint8Array(total); let p=0;
+  for(const b of parts){out.set(b,p);p+=b.length;}
+  for(const b of central){out.set(b,p);p+=b.length;}
+  out.set(eo,p);
+  return out;
+}
+
+/* ---------- xlsx 讀成 2D 陣列 ---------- */
+function xmlText(s){return s.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#(\d+);/g,(m,d)=>String.fromCodePoint(+d)).replace(/&#x([0-9a-fA-F]+);/g,(m,h)=>String.fromCodePoint(parseInt(h,16))).replace(/&amp;/g,'&');}
+function colNum(ref){let n=0;for(const ch of ref){const c=ch.charCodeAt(0);if(c<65||c>90)break;n=n*26+(c-64);}return n;}
+function parseSheet(sheetXml, shared){
+  const rows=[];
+  const rowRe=/<row[^>]*\br="(\d+)"[^>]*>([\s\S]*?)<\/row>/g;
+  let rm;
+  while((rm=rowRe.exec(sheetXml))){
+    const rIdx=+rm[1]-1, cells=[];
+    const cRe=/<c\b([^>]*)(?:\/>|>([\s\S]*?)<\/c>)/g;
+    let cm;
+    while((cm=cRe.exec(rm[2]))){
+      const attrs=cm[1], body=cm[2]||'';
+      const ref=(attrs.match(/\br="([A-Z]+)\d+"/)||[])[1]; if(!ref) continue;
+      const t=(attrs.match(/\bt="([^"]+)"/)||[])[1]||'n';
+      let val=null;
+      if(t==='s'){ const v=(body.match(/<v>([\s\S]*?)<\/v>/)||[])[1]; if(v!==undefined) val=shared[+v]; }
+      else if(t==='inlineStr'){ const parts=[...body.matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map(m=>xmlText(m[1])); val=parts.length?parts.join(''):null; }
+      else if(t==='str'||t==='e'){ const v=(body.match(/<v>([\s\S]*?)<\/v>/)||[])[1]; val=v===undefined?null:xmlText(v); }
+      else { const v=(body.match(/<v>([\s\S]*?)<\/v>/)||[])[1]; val=(v===undefined||v==='')?null:Number(v); }
+      cells[colNum(ref)-1]=val;
+    }
+    rows[rIdx]=cells;
+  }
+  for(let i=0;i<rows.length;i++) if(!rows[i]) rows[i]=[];
+  return rows;
+}
+function parseShared(xml){
+  if(!xml) return [];
+  return [...xml.matchAll(/<si>([\s\S]*?)<\/si>/g)].map(m=>
+    [...m[1].matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map(x=>xmlText(x[1])).join(''));
+}
+async function readWorkbook(arrayBuffer){
+  const z=await unzip(arrayBuffer), dec=new TextDecoder();
+  const shared=parseShared(z['xl/sharedStrings.xml']?dec.decode(z['xl/sharedStrings.xml']):null);
+  const wb=dec.decode(z['xl/workbook.xml']||new Uint8Array());
+  const rels=dec.decode(z['xl/_rels/workbook.xml.rels']||new Uint8Array());
+  const first=(wb.match(/<sheet\b[^>]*r:id="([^"]+)"/)||[])[1];
+  let path='xl/worksheets/sheet1.xml';
+  if(first){
+    const t=rels.match(new RegExp('<Relationship[^>]*Id="'+first+'"[^>]*Target="([^"]+)"'));
+    if(t) path='xl/'+t[1].replace(/^\/?xl\//,'').replace(/^\//,'');
+  }
+  if(!z[path]) path=Object.keys(z).find(k=>/^xl\/worksheets\/sheet\d+\.xml$/.test(k));
+  return parseSheet(dec.decode(z[path]), shared);
+}
+
+/* ---------- 品項 → 欄位對照 ---------- */
+const COLS={'香米清酒':{s:6},'果泥':{700:7,250:8},'香米梅酒':{700:9,250:10},
+ '威士忌':{700:11,250:12},'紅玉紅茶':{700:13,250:14},'碧螺春':{700:15,250:16},
+ '東方美人':{700:17,250:18},'凍頂烏龍':{700:19,250:20},'紅烏龍':{700:21,250:22},
+ '玫瑰鹽紅柚':{700:23,250:24},'苦盡柑來':{700:25,250:26},'荔枝':{700:27,250:28},
+ '茶韻禮盒':{s:29},'奔馬禮盒':{s:30},'高端禮盒':{s:31},'長流':{s:34}};
+const INV_COL=32;
+const FLAV=['玫瑰鹽紅柚','紅玉紅茶','東方美人','凍頂烏龍','紅烏龍','碧螺春','威士忌','香米梅酒','果泥','荔枝'];
+
+function classify(name){
+  const n=String(name).replace(/\s/g,'');
+  if(n.includes('長流')) return ['長流','s',1];
+  if(n.includes('茶韻禮盒')) return ['茶韻禮盒','s',1];
+  if(n.includes('大禮盒組')||n.includes('奔馬')) return ['奔馬禮盒','s',1];
+  if(n.includes('高端')) return ['高端禮盒','s',1];
+  if(n.includes('香米清酒')){ const m=n.match(/\((\d+)入\)/); return ['香米清酒','s',m?+m[1]:1]; }
+  const size = n.includes('700')?700 : (n.includes('250')?250:'s');
+  for(const k of FLAV) if(n.includes(k)) return [k,size,1];
+  if(n.includes('柑橘咖啡')||n.includes('苦盡柑來')) return ['苦盡柑來',size,1];
+  return [null,null,null];
+}
+function payType(p){
+  if(!p) return null;
+  p=String(p);
+  if(p.startsWith('TAPPAY')) return 'Tappay';
+  if(p.startsWith('現金')) return '現金';
+  if(p.startsWith('轉帳')) return '轉帳';
+  return p.replace(/\d+$/,'');
+}
+function fmtDate(o){ const m=String(o).match(/^(\d{4})(\d{2})(\d{2})/); return m? (+m[2])+'/'+(+m[3]) : null; }
+
+/* ---------- 主轉換：原始 2D → 訂單列 ---------- */
+function buildOrders(rows){
+  const H=rows[0]||[];
+  const need=['取單號碼','訂單編號','付款方式','品名','數量','總金額','發票'];
+  const idx={};
+  need.forEach(k=>{ idx[k]=H.findIndex(h=>String(h||'').trim()===k); });
+  const missing=need.filter(k=>idx[k]<0);
+  if(missing.length) throw new Error('這不像是 SIMPOS 訂單明細（找不到欄位：'+missing.join('、')+'）');
+
+  const map=new Map(), unmapped=new Set();
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i]; if(!r||!r.length) continue;
+    const tk=r[idx['取單號碼']]; if(tk===null||tk===undefined||tk==='') continue;
+    const key=String(tk);
+    let o=map.get(key);
+    if(!o){ o={tk:key, d:String(r[idx['訂單編號']]??''), total:r[idx['總金額']], pay:r[idx['付款方式']], inv:r[idx['發票']], items:{}}; map.set(key,o); }
+    const item=r[idx['品名']];
+    if(!item||item==='手動折扣') continue;
+    const [k,size,mult]=classify(item);
+    if(k===null){ unmapped.add(String(item)); continue; }
+    const col=COLS[k][size]!==undefined?COLS[k][size]:COLS[k].s;
+    if(col===undefined){ unmapped.add(item+'/'+size); continue; }
+    o.items[col]=(o.items[col]||0)+(Number(r[idx['數量']])||0)*mult;
+  }
+  const list=[...map.values()].sort((a,b)=>{
+    const da=a.d.slice(0,8), db=b.d.slice(0,8);
+    if(da!==db) return da<db?-1:1;
+    return (parseInt(a.tk,10)||0)-(parseInt(b.tk,10)||0);
+  });
+  return {list, unmapped:[...unmapped]};
+}
+
+/* ---------- 寫出：套模板 xlsx ---------- */
+function colLetter(n){let s='';while(n>0){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=(n-m-1)/26;}return s;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function renderSheet(sheetXml, list){
+  const r4=sheetXml.match(/<row r="4"[^>]*>[\s\S]*?<\/row>/);
+  if(!r4) throw new Error('模板毀損：找不到樣板列');
+  const rowAttrs=(r4[0].match(/<row (r="4"[^>]*)>/)||[])[1].replace(/^r="4"\s*/,'');
+  const styles={};
+  for(const m of r4[0].matchAll(/<c r="([A-Z]+)4"([^>]*?)\/?>/g)){
+    const s=(m[2].match(/\bs="(\d+)"/)||[])[1];
+    styles[colNum(m[1])]= s!==undefined?s:null;
+  }
+  const NCOL=34;
+  let body='';
+  list.forEach((o,i)=>{
+    const rn=4+i;
+    const vals={};
+    vals[1]=fmtDate(o.d); vals[3]=o.total; vals[4]=payType(o.pay); vals[5]=o.tk; vals[INV_COL]=o.inv;
+    for(const c in o.items) vals[+c]=o.items[c];
+    let cells='';
+    for(let c=1;c<=NCOL;c++){
+      const sAttr=styles[c]!=null?` s="${styles[c]}"`:'';
+      const v=vals[c];
+      const ref=colLetter(c)+rn;
+      if(v===null||v===undefined||v===''){ cells+=`<c r="${ref}"${sAttr}/>`; }
+      else if(typeof v==='number'){ cells+=`<c r="${ref}"${sAttr}><v>${v}</v></c>`; }
+      else { cells+=`<c r="${ref}"${sAttr} t="inlineStr"><is><t>${esc(v)}</t></is></c>`; }
+    }
+    body+=`<row r="${rn}" ${rowAttrs}>${cells}</row>`;
+  });
+  const last=Math.max(4,3+list.length);
+  let out=sheetXml.replace(/(<sheetData>[\s\S]*?<\/row>)([\s\S]*?)(<\/sheetData>)/, (m,head,mid,tail)=>{
+    const upTo3=sheetXml.match(/<sheetData>[\s\S]*?<row r="3"[^>]*>[\s\S]*?<\/row>/);
+    return (upTo3?upTo3[0]:head)+body+tail;
+  });
+  out=out.replace(/<dimension ref="[^"]*"\/>/, `<dimension ref="A1:AH${last}"/>`);
+  out=out.replace(/sqref="D4:D\d+"/, `sqref="D4:D${last}"`);
+  out=out.replace(/sqref="B4:B\d+"/, `sqref="B4:B${last}"`);
+  return out;
+}
+
+function b64ToU8(b64){
+  const bin=typeof atob==='function'?atob(b64):Buffer.from(b64,'base64').toString('binary');
+  const u=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i);
+  return u;
+}
+
+async function makeXlsx(list, tplB64){
+  const z=await unzip(b64ToU8(tplB64).buffer);
+  const dec=new TextDecoder(), enc=new TextEncoder();
+  const sheetPath='xl/worksheets/sheet1.xml';
+  const patched=renderSheet(dec.decode(z[sheetPath]), list);
+  const files=Object.keys(z).map(name=>[name, name===sheetPath?enc.encode(patched):z[name]]);
+  return zip(files);
+}
+
+
+
+/* ===== 介面 ===== */
+const $=id=>document.getElementById(id);
+let LIST=null, SRCNAME='';
+
+function showMsg(cls,html){const m=$('msg');m.className='msg '+cls;m.innerHTML=html;}
+function clearMsg(){$('msg').className='msg';$('msg').innerHTML='';}
+
+const NAMES=['銷售日期','BD','金額','付款方式','取單號碼','香米清酒','果泥700','果泥250','香米梅酒700','香米梅酒250',
+'威士忌700','威士忌250','紅玉紅茶700','紅玉紅茶250','碧螺春700','碧螺春250','東方美人700','東方美人250',
+'凍頂烏龍700','凍頂烏龍250','紅烏龍700','紅烏龍250','玫瑰鹽紅柚700','玫瑰鹽紅柚250','苦盡柑來700','苦盡柑來250',
+'荔枝700','荔枝250','茶韻禮盒','奔馬禮盒','高端禮盒','發票號碼','贈品帆布袋','長流'];
+
+function preview(list){
+  let h='<thead><tr>'+NAMES.map(n=>'<th>'+n+'</th>').join('')+'</tr></thead><tbody>';
+  for(const o of list){
+    const v={1:fmtDate(o.d),3:o.total,4:payType(o.pay),5:o.tk,32:o.inv};
+    for(const c in o.items) v[+c]=o.items[c];
+    h+='<tr>';
+    for(let c=1;c<=34;c++){
+      const x=v[c];
+      const cls=(c===5||c===3)?' class="n"':(c===32?' class="l"':'');
+      h+='<td'+cls+'>'+(x==null||x===''?'':x)+'</td>';
+    }
+    h+='</tr>';
+  }
+  $('pv').innerHTML=h+'</tbody>';
+  $('cnt').textContent='共 '+list.length+' 張訂單';
+  $('pv-card').style.display='';
+}
+
+async function handleFile(f){
+  if(!f) return;
+  clearMsg(); $('go').disabled=true; LIST=null; $('pv-card').style.display='none'; $('chips').innerHTML='';
+  if(!/\.xlsx$/i.test(f.name)){ showMsg('err','只吃 <b>.xlsx</b>。如果是 .xls 或 .csv，請先用 Excel 另存成 .xlsx。'); return; }
+  if(typeof DecompressionStream==='undefined'){ showMsg('err','你的瀏覽器版本太舊，跑不動這支工具。請改用 <b>Chrome 或 Edge</b> 開啟。'); return; }
+  $('drop').classList.add('has');
+  $('drop').querySelector('.t').textContent=f.name;
+  $('drop').querySelector('.s').textContent='處理中…';
+  SRCNAME=f.name;
+  try{
+    const rows=await readWorkbook(await f.arrayBuffer());
+    const {list,unmapped}=buildOrders(rows);
+    if(!list.length){ showMsg('err','讀到檔案了，但裡面<b>一張訂單都沒有</b>。確認匯出的是「訂單明細」而不是別的報表。'); $('drop').querySelector('.s').textContent='請換一個檔'; return; }
+    LIST=list;
+    const dates=[...new Set(list.map(o=>fmtDate(o.d)))];
+    const items=list.reduce((a,o)=>a+Object.values(o.items).reduce((x,y)=>x+y,0),0);
+    const amt=list.reduce((a,o)=>a+(Number(o.total)||0),0);
+    $('chips').innerHTML=
+      '<span class="chip ok">✅ '+list.length+' 張訂單</span>'+
+      '<span class="chip">日期 <b>'+dates[0]+(dates.length>1?' ~ '+dates[dates.length-1]:'')+'</b></span>'+
+      '<span class="chip">品項合計 <b>'+items+'</b></span>'+
+      '<span class="chip">金額合計 <b>'+amt.toLocaleString()+'</b></span>'+
+      (unmapped.length?'<span class="chip warn">⚠️ 認不出 '+unmapped.length+' 種品項</span>':'');
+    if(unmapped.length) showMsg('warn','⚠️ 這些品項<b>沒有對應欄位、數量沒被算進去</b>：<br>'+unmapped.map(x=>'・'+x).join('<br>')+'<br>請回報，先別直接拿去用。');
+    $('drop').querySelector('.s').textContent='讀好了，可以下載';
+    $('go').disabled=false;
+    preview(list);
+  }catch(e){
+    showMsg('err','讀不了這個檔：<b>'+(e.message||e)+'</b>');
+    $('drop').classList.remove('has');
+    $('drop').querySelector('.t').textContent='把檔案拖進來，或點這裡選檔';
+    $('drop').querySelector('.s').textContent='支援 SIMPOS 匯出的 .xlsx';
+  }
+}
+
+$('drop').onclick=()=>$('file').click();
+$('file').onchange=e=>handleFile(e.target.files[0]);
+['dragenter','dragover'].forEach(ev=>$('drop').addEventListener(ev,e=>{e.preventDefault();$('drop').classList.add('over');}));
+['dragleave','drop'].forEach(ev=>$('drop').addEventListener(ev,e=>{e.preventDefault();$('drop').classList.remove('over');}));
+$('drop').addEventListener('drop',e=>handleFile(e.dataTransfer.files[0]));
+
+$('go').onclick=async()=>{
+  if(!LIST) return;
+  $('go').disabled=true; $('go').textContent='產生中…';
+  try{
+    const bytes=await makeXlsx(LIST,TPL_B64);
+    const ds=[...new Set(LIST.map(o=>o.d.slice(0,8)))].sort();
+    const tag=ds.length>1?(ds[0]+'-'+ds[ds.length-1].slice(4)):ds[0];
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+    a.download='銷售整理-'+tag+'.xlsx';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    showMsg('ok','✅ 已下載 <b>'+a.download+'</b>（'+LIST.length+' 張訂單）。BD 欄記得自己填。');
+  }catch(e){ showMsg('err','產生檔案失敗：<b>'+(e.message||e)+'</b>'); }
+  $('go').disabled=false; $('go').textContent='⬇️ 下載整理後的 Excel';
+};
+
+$('foot').textContent='版型基準：2026-08-31 · 純前端處理，檔案不離開這台電腦';
+
+</script>
+</body>
+</html>
