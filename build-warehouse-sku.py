@@ -37,10 +37,14 @@ rows = [{'sku': val(d,'料號(SKU)'), 'name': val(d,'品名'), 'cls': val(d,'類
          'vol': val(d,'規格'), 'unit': val(d,'單位'), 'barcode': val(d,'國際條碼'),
          'status': val(d,'狀態'), 'old': val(d,'舊料號(參考)')} for d in recs if val(d,'料號(SKU)')]
 flav = {}
+PACK = re.compile(r'^(單瓶|\d+入箱)$')   # 醋覓品名尾段是包裝，口味在倒數第二段
 for x in rows:
     p = x['sku'].split('-')
     if p[0] in ('A','S') and len(p) >= 4:
-        flav.setdefault(p[3], x['name'].split('_')[-1])
+        code = re.sub(r'\d+$', '', p[3])   # PPF12 → PPF（12入箱與單瓶同口味碼）
+        segs = x['name'].split('_')
+        if PACK.match(segs[-1]): segs.pop()
+        flav.setdefault(code, segs[-1])
 
 snap = sys.argv[sys.argv.index('--date')+1] if '--date' in sys.argv else datetime.date.today().isoformat()
 html = open(HTML, encoding='utf-8').read()
