@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600&family=Noto+Sans+TC:wght@400;500&display=swap">
 <title>分潤對帳單產生器</title>
 <script>
 // 必須從入口網站（index.html）登入過才能進來，避免繞過密碼直接開啟
@@ -16,16 +19,19 @@ if (sessionStorage.getItem('pw_ok') !== '1') {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-/* ── Reset & Base ── */
+/* ── Reset & Base（工具箱共用暖紙風格） ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root{--paper:#f3ede2;--card:#faf6ee;--ink:#2a2522;--mut:#6f645a;--dim:#8c8177;--line:#ddd2c0;--line-card:#e3d9c8;--accent:#a8742f;--seal:#b73a2e;--ok:#3f5a4c;--serif:'Noto Serif TC','PingFang TC','Microsoft JhengHei',serif;--sans:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif}
 body {
   display: flex;
   height: 100vh;
-  font-family: 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC', 'Apple LiGothic Medium', sans-serif;
+  font-family: var(--sans);
   font-size: 13px;
-  background: #f0f0f0;
-  color: #1a1a1a;
+  background-color: var(--paper);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.28 0 0 0 0 0.2 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
+  color: var(--ink);
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* ── Form Panel ── */
@@ -34,68 +40,78 @@ body {
   min-width: 380px;
   height: 100vh;
   overflow-y: auto;
-  background: #fff;
-  border-right: 1px solid #ddd;
+  background: var(--card);
+  border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
   gap: 0;
 }
 #form-header {
-  padding: 16px 20px 12px;
-  background: #1a1a2e;
-  color: #fff;
+  padding: 0 20px;
+  height: 72px;
+  background: var(--paper);
+  color: var(--ink);
+  border-bottom: 1px solid var(--line);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-shrink: 0;
+  position: sticky; top: 0; z-index: 5;
 }
-#form-header h1 { font-size: 15px; font-weight: 600; letter-spacing: 0.03em; }
-#form-header span { font-size: 11px; opacity: 0.6; margin-left: auto; }
-#form-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
+#form-header .seal { display: flex; flex-shrink: 0; }
+#form-header .h-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+#form-header h1 { font-family: var(--serif); font-size: 16px; font-weight: 600; letter-spacing: 1.5px; line-height: 1.2; white-space: nowrap; }
+#form-header .h-en { font-size: 10px; letter-spacing: 2.5px; color: var(--dim); line-height: 1.2; }
+#form-header .back { color: var(--mut); font-size: 11.5px; letter-spacing: 1px; white-space: nowrap; }
+#form-header .back:hover { color: var(--ink); }
+#form-body { padding: 18px 16px; display: flex; flex-direction: column; gap: 16px; flex: 1; }
 
 fieldset {
-  border: 1px solid #e5e5e5;
-  border-radius: 8px;
-  padding: 10px 12px 12px;
+  border: 1px solid var(--line-card);
+  border-radius: 3px;
+  padding: 12px 14px 14px;
+  background: #fff;
 }
 legend {
-  font-size: 11px;
+  font-family: var(--serif);
+  font-size: 12.5px;
   font-weight: 600;
-  color: #666;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 0 4px;
+  color: var(--ink);
+  letter-spacing: 2px;
+  padding: 0 6px;
 }
-.field { display: flex; flex-direction: column; gap: 3px; margin-top: 8px; }
-.field label { font-size: 11px; color: #888; }
+.field { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+.field label { font-size: 11px; letter-spacing: 1px; color: var(--dim); }
 .field input, .field textarea {
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 7px 9px;
   font-size: 12px;
   font-family: inherit;
+  color: var(--ink);
+  background: #fff;
   width: 100%;
   transition: border-color 0.15s;
 }
 .field input:focus, .field textarea:focus {
   outline: none;
-  border-color: #4a90e2;
+  border-color: var(--ink);
 }
 .field-row { display: flex; gap: 8px; }
 .field-row .field { flex: 1; }
 .field-highlight {
-  background: #fff8dc;
-  border: 1.5px solid #f0c419;
-  border-radius: 6px;
+  background: #f7efe0;
+  border: 1px solid #e6d3b3;
+  border-radius: 2px;
   padding: 8px 10px;
   margin-top: 8px;
 }
-.field-highlight label { color: #8a6d00; font-weight: 700; }
+.field-highlight label { color: var(--accent); font-weight: 500; }
 .field-highlight input {
-  border-color: #f0c419;
-  background: #fffdf5;
+  border-color: #e6d3b3;
+  background: #fffdf8;
 }
-.field-highlight input:focus { border-color: #d9a400; }
+.field-highlight input:focus { border-color: var(--accent); }
 
 /* Product rows */
 .product-row-header {
@@ -107,7 +123,8 @@ legend {
 }
 .product-row-header span {
   font-size: 10px;
-  color: #aaa;
+  letter-spacing: 1px;
+  color: var(--dim);
   text-align: center;
 }
 .product-row-header span:first-child { text-align: left; }
@@ -119,30 +136,32 @@ legend {
   align-items: start;
 }
 .product-row input {
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
   padding: 5px 6px;
   font-size: 11px;
   font-family: inherit;
+  color: var(--ink);
+  background: #fff;
   width: 100%;
 }
-.product-row input:focus { outline: none; border-color: #4a90e2; }
+.product-row input:focus { outline: none; border-color: var(--ink); }
 .product-row input[type="number"] { text-align: right; }
 .cost-cell { display: flex; flex-direction: column; gap: 2px; }
 .cost-cell input { width: 100%; }
-.cost-cell input[readonly] { background: #f3f3f3; color: #999; cursor: default; }
+.cost-cell input[readonly] { background: var(--paper); color: var(--dim); cursor: default; }
 .override-toggle {
   display: flex;
   align-items: center;
   gap: 3px;
   font-size: 10px;
-  color: #888;
+  color: var(--dim);
   cursor: pointer;
   user-select: none;
   padding-left: 2px;
 }
-.override-toggle input[type="checkbox"] { cursor: pointer; margin: 0; width: 12px; height: 12px; }
-.override-toggle.active { color: #4a90e2; font-weight: 600; }
+.override-toggle input[type="checkbox"] { cursor: pointer; margin: 0; width: 12px; height: 12px; accent-color: var(--ink); }
+.override-toggle.active { color: var(--accent); font-weight: 500; }
 .calculated-row {
   display: grid;
   grid-template-columns: 1fr 52px 72px 86px 28px;
@@ -152,12 +171,12 @@ legend {
 }
 .calculated-row span {
   font-size: 10px;
-  color: #888;
+  color: var(--dim);
   text-align: right;
   padding-right: 6px;
 }
-.calculated-row span:first-child { text-align: left; color: #bbb; font-style: italic; }
-.calculated-row .profit-val { color: #d97706; font-weight: 600; }
+.calculated-row span:first-child { text-align: left; color: var(--line); font-style: italic; }
+.calculated-row .profit-val { color: var(--accent); font-weight: 600; }
 
 /* Gift rows */
 .gift-row {
@@ -168,14 +187,16 @@ legend {
   align-items: center;
 }
 .gift-row input {
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
   padding: 5px 6px;
   font-size: 11px;
   font-family: inherit;
+  color: var(--ink);
+  background: #fff;
   width: 100%;
 }
-.gift-row input:focus { outline: none; border-color: #4a90e2; }
+.gift-row input:focus { outline: none; border-color: var(--ink); }
 .gift-row-header {
   display: grid;
   grid-template-columns: 1fr 60px 28px;
@@ -183,30 +204,31 @@ legend {
   margin-top: 8px;
   padding: 0 2px;
 }
-.gift-row-header span { font-size: 10px; color: #aaa; text-align: center; }
+.gift-row-header span { font-size: 10px; letter-spacing: 1px; color: var(--dim); text-align: center; }
 .gift-row-header span:first-child { text-align: left; }
 
 .btn-add {
-  margin-top: 8px;
-  padding: 5px 10px;
+  margin-top: 10px;
+  padding: 7px 10px;
   font-size: 11px;
+  letter-spacing: 1.5px;
   font-family: inherit;
-  background: #f5f5f5;
-  border: 1px dashed #bbb;
-  border-radius: 5px;
+  background: transparent;
+  border: 1px dashed var(--line);
+  border-radius: 2px;
   cursor: pointer;
-  color: #666;
+  color: var(--mut);
   width: 100%;
-  transition: background 0.15s;
+  transition: .15s;
 }
-.btn-add:hover { background: #eee; }
+.btn-add:hover { border-color: var(--ink); color: var(--ink); }
 .btn-remove {
   width: 24px;
   height: 24px;
-  border: none;
-  border-radius: 4px;
-  background: #fee2e2;
-  color: #dc2626;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--dim);
   cursor: pointer;
   font-size: 14px;
   line-height: 1;
@@ -214,43 +236,45 @@ legend {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: .15s;
 }
-.btn-remove:hover { background: #fecaca; }
+.btn-remove:hover { border-color: var(--seal); color: var(--seal); }
 
 /* Download button */
 #form-footer {
   padding: 14px 16px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--line);
   flex-shrink: 0;
-  background: #fff;
+  background: var(--card);
+  position: sticky; bottom: 0;
 }
 #download-pdf {
   width: 100%;
-  padding: 12px;
-  background: #1a1a2e;
-  color: #fff;
+  padding: 13px;
+  background: var(--ink);
+  color: var(--paper);
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
+  border-radius: 2px;
+  font-size: 13.5px;
+  font-weight: 500;
   font-family: inherit;
   cursor: pointer;
   transition: background 0.15s;
-  letter-spacing: 0.04em;
+  letter-spacing: 3px;
 }
-#download-pdf:hover { background: #2d2d4a; }
-#download-pdf:disabled { background: #999; cursor: wait; }
+#download-pdf:hover { background: #000; }
+#download-pdf:disabled { background: var(--line); color: var(--dim); cursor: wait; }
 
 /* ── Preview Panel ── */
 #preview-panel {
   flex: 1;
   height: 100vh;
   overflow: hidden;
-  background: #d8d8d8;
+  background: transparent;
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding-top: 20px;
+  padding-top: 24px;
 }
 #preview-wrapper {
   position: relative;
@@ -451,28 +475,30 @@ legend {
 #company-toggle {
   display: flex;
   gap: 0;
-  background: rgba(255,255,255,0.1);
-  border-radius: 6px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
   padding: 2px;
   margin-left: auto;
+  background: #fff;
+  flex-shrink: 0;
 }
 .toggle-btn {
-  padding: 4px 10px;
+  padding: 5px 10px;
   font-size: 11px;
+  letter-spacing: 1px;
   font-family: inherit;
   background: transparent;
   border: none;
-  border-radius: 4px;
-  color: rgba(255,255,255,0.65);
+  border-radius: 1px;
+  color: var(--mut);
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 400;
   transition: all 0.15s;
   white-space: nowrap;
 }
 .toggle-btn.active {
-  background: #fff;
-  color: #1a1a2e;
-  font-weight: 700;
+  background: var(--ink);
+  color: var(--paper);
 }
 
 </style>
@@ -482,7 +508,8 @@ legend {
 <!-- ── Left: Form Panel ── -->
 <div id="form-panel">
   <div id="form-header">
-    <h1>分潤對帳單產生器</h1>
+    <span class="seal"><svg width="30" height="30" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="1.5" y="1.5" width="31" height="31" rx="2" stroke="#b73a2e" stroke-width="1.5"/><text x="17" y="24" text-anchor="middle" font-family="'Noto Serif TC','PingFang TC',serif" font-size="19" font-weight="600" fill="#b73a2e">奧</text></svg></span>
+    <span class="h-t"><h1>分潤對帳單產生器</h1><span class="h-en">PROFIT SHARE</span></span>
     <div id="company-toggle">
       <button class="toggle-btn active" data-co="0">奧提瑪</button>
       <button class="toggle-btn" data-co="1">加壹數位</button>
@@ -587,7 +614,8 @@ legend {
 
   </div><!-- /form-body -->
   <div id="form-footer">
-    <button id="download-pdf">⬇ 下載 PDF</button>
+    <button id="download-pdf">下載 PDF</button>
+    <div style="text-align:center;margin-top:10px"><a class="back" href="index.html">回工具箱</a></div>
   </div>
 </div>
 
