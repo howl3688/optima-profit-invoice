@@ -21,6 +21,7 @@
 | `index.html` | 工具箱首頁 |
 | `invoice.html` | 分潤對帳單產生器（主體） |
 | `warehouse-sku.html` ／ `build-warehouse-sku.py` | 倉庫料號表與產生器 |
+| `zhongqin-inventory.html` | 眾勤月度進銷存表產生器（純前端 ExcelJS；計帳規則在檔內 RULES 區，與主基地 skill `眾勤進銷存表/計帳規則.md` 同步；眾勤模板 base64 內嵌） |
 | `*logo.png`／`*發票章.jpg` | 內嵌用圖（**base64 內嵌在 html**，不依賴外部檔名） |
 | `分潤對帳單產生器_使用教學.docx` | 給人看的操作教學 |
 
