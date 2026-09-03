@@ -4,467 +4,368 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>奧提瑪工具箱</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600&family=Noto+Sans+TC:wght@400;500&display=swap">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC', sans-serif;
-    background: #f0f2f5;
-    min-height: 100vh;
-    color: #222;
+  :root {
+    --paper: #f3ede2;
+    --card: #faf6ee;
+    --ink: #2a2522;
+    --mut: #6f645a;
+    --dim: #8c8177;
+    --line: #ddd2c0;
+    --line-card: #e3d9c8;
+    --accent: #a8742f;
+    --seal: #b73a2e;
+    --serif: 'Noto Serif TC', 'PingFang TC', 'Microsoft JhengHei', serif;
+    --sans: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
   }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    min-height: 100vh;
+    background-color: var(--paper);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.28 0 0 0 0 0.2 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
 
-  /* ── Password screen ── */
+  /* ── 密碼鎖 ── */
   #pw-screen {
     position: fixed; inset: 0;
-    background: #1a1a2e;
+    background: var(--paper);
     display: flex; align-items: center; justify-content: center;
     z-index: 9999;
+    padding: 24px;
   }
   #pw-screen.hidden { display: none; }
   .pw-box {
-    background: #fff;
-    border-radius: 16px;
-    padding: 48px 40px;
-    width: 340px;
+    background: var(--card);
+    border: 1px solid var(--line-card);
+    border-radius: 3px;
+    padding: 44px 40px 36px;
+    width: 100%; max-width: 360px;
     text-align: center;
-    box-shadow: 0 20px 60px rgba(0,0,0,.35);
   }
-  .pw-logo {
-    width: 72px; height: 72px;
-    border-radius: 50%;
-    background: #d42b2b;
-    margin: 0 auto 20px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 32px; font-weight: 900; color: #fff;
-  }
-  .pw-box h2 { font-size: 20px; margin-bottom: 6px; color: #1a1a2e; }
-  .pw-box p  { font-size: 13px; color: #888; margin-bottom: 24px; }
+  .pw-seal { margin: 0 auto 18px; display: block; }
+  .pw-box h2 { font-family: var(--serif); font-size: 20px; font-weight: 600; letter-spacing: 3px; margin-bottom: 6px; }
+  .pw-box p  { font-size: 12.5px; letter-spacing: 1px; color: var(--dim); margin-bottom: 26px; }
   .pw-box input {
-    width: 100%; padding: 12px 16px; border: 2px solid #e5e7eb;
-    border-radius: 8px; font-size: 16px; text-align: center;
-    letter-spacing: 4px; outline: none; transition: border-color .2s;
-    font-family: inherit;
+    width: 100%; padding: 12px 16px;
+    border: 1px solid var(--line); border-radius: 2px;
+    background: #fff;
+    font-size: 16px; text-align: center; letter-spacing: 6px;
+    outline: none; font-family: inherit; color: var(--ink);
+    transition: border-color .2s;
   }
-  .pw-box input:focus { border-color: #FFE600; }
+  .pw-box input:focus { border-color: var(--ink); }
   .pw-box button {
-    margin-top: 16px; width: 100%; padding: 12px;
-    background: #FFE600; border: none; border-radius: 8px;
-    font-size: 15px; font-weight: 700; cursor: pointer;
+    margin-top: 14px; width: 100%; padding: 12px;
+    background: var(--ink); color: var(--paper);
+    border: none; border-radius: 2px;
+    font-size: 14px; letter-spacing: 3px; cursor: pointer;
     font-family: inherit; transition: background .2s;
   }
-  .pw-box button:hover { background: #e6cf00; }
-  .pw-error { color: #cc0000; font-size: 13px; margin-top: 10px; min-height: 18px; }
+  .pw-box button:hover { background: #000; }
+  .pw-error { color: var(--seal); font-size: 12.5px; margin-top: 10px; min-height: 18px; }
 
-  /* ── App shell ── */
+  /* ── 外框 ── */
   #app { display: none; min-height: 100vh; flex-direction: column; }
   #app.visible { display: flex; }
+  .wrap { width: 100%; max-width: 1440px; margin: 0 auto; padding-left: clamp(20px, 6.6vw, 96px); padding-right: clamp(20px, 6.6vw, 96px); }
 
-  /* ── Header ── */
-  header {
-    background: #1a1a2e;
-    padding: 0 40px;
-    height: 64px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .header-brand {
-    display: flex; align-items: center; gap: 12px;
-    color: #fff; font-size: 18px; font-weight: 700;
-  }
-  .header-badge {
-    background: #FFE600;
-    color: #1a1a2e;
-    font-size: 11px; font-weight: 800;
-    padding: 3px 8px; border-radius: 4px;
-    letter-spacing: 1px;
-  }
-  .header-sub { color: #aaa; font-size: 13px; }
+  /* ── 頂欄 ── */
+  header { border-bottom: 1px solid var(--line); }
+  .hd { display: flex; align-items: center; justify-content: space-between; height: 88px; gap: 16px; }
+  .brand { display: flex; align-items: center; gap: 14px; color: var(--ink); }
+  .brand-t { display: flex; flex-direction: column; gap: 2px; }
+  .brand-zh { font-family: var(--serif); font-size: 20px; font-weight: 600; letter-spacing: 2px; line-height: 1.2; }
+  .brand-en { font-size: 10.5px; letter-spacing: 3px; color: var(--dim); line-height: 1.2; }
+  nav { display: flex; align-items: center; gap: 28px; font-size: 13px; color: var(--mut); }
+  nav a { color: var(--mut); transition: color .15s; }
+  nav a:hover { color: var(--ink); }
+  nav .sep { width: 1px; height: 16px; background: var(--line); }
+  nav .note { color: var(--dim); }
 
-  /* ── Main content ── */
-  main { flex: 1; padding: 40px; }
+  /* ── 開場 ── */
+  .hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; padding-top: 84px; padding-bottom: 56px; }
+  .hero-t { display: flex; flex-direction: column; gap: 18px; max-width: 640px; }
+  .hero h1 { font-family: var(--serif); font-size: clamp(30px, 3.2vw, 46px); font-weight: 600; letter-spacing: 6px; line-height: 1.15; }
+  .hero p { font-size: 15px; line-height: 1.9; color: var(--mut); letter-spacing: .5px; }
+  .stats { display: flex; gap: 40px; padding-bottom: 8px; flex-shrink: 0; }
+  .stat { display: flex; flex-direction: column; gap: 6px; }
+  .stat b { font-family: var(--serif); font-size: 28px; font-weight: 400; line-height: 1; }
+  .stat span { font-size: 11.5px; letter-spacing: 2px; color: var(--dim); }
 
-  /* ── View switching ── */
-  .view { display: none; }
-  .view.active { display: block; }
+  /* ── 部門區 ── */
+  .dept { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 40px; padding-top: 40px; padding-bottom: 56px; border-top: 1px solid var(--line); }
+  .dept:last-of-type { padding-bottom: 64px; }
+  .dept-h { display: flex; flex-direction: column; gap: 14px; }
+  .dept-name { display: flex; align-items: center; gap: 12px; }
+  .dept-name i { display: block; width: 18px; height: 2px; background: var(--accent); }
+  .dept-name h2 { font-family: var(--serif); font-size: 24px; font-weight: 600; letter-spacing: 4px; }
+  .dept-en { font-size: 11.5px; letter-spacing: 3px; color: var(--dim); }
+  .dept-d { font-size: 13px; line-height: 1.8; color: var(--mut); }
+  .tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
 
-  /* ── Dept grid ── */
-  .dept-intro {
-    margin-bottom: 32px;
+  /* ── 工具卡 ── */
+  .tool {
+    display: flex; flex-direction: column; gap: 14px;
+    padding: 26px 26px 22px;
+    background: var(--card);
+    border: 1px solid var(--line-card);
+    border-radius: 3px;
+    color: var(--ink);
+    min-height: 196px;
+    transition: border-color .18s, transform .18s;
   }
-  .dept-intro h1 { font-size: 26px; font-weight: 800; color: #1a1a2e; margin-bottom: 6px; }
-  .dept-intro p  { color: #666; font-size: 14px; }
+  .tool:hover { border-color: var(--ink); transform: translateY(-2px); }
+  .tool-top { display: flex; align-items: center; justify-content: space-between; }
+  .tool svg { flex-shrink: 0; }
+  .tag { font-size: 10.5px; letter-spacing: 2px; color: var(--dim); border: 1px solid var(--line); padding: 3px 8px; border-radius: 2px; }
+  .tool-b { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; }
+  .tool h3 { font-family: var(--serif); font-size: 18px; font-weight: 600; letter-spacing: 1px; line-height: 1.4; }
+  .tool p { font-size: 13px; line-height: 1.8; color: var(--mut); }
+  .go { display: flex; align-items: center; gap: 8px; font-size: 12.5px; letter-spacing: 1.5px; color: var(--accent); transition: color .15s; }
+  .go i { display: block; width: 28px; height: 1px; background: currentColor; transition: width .18s; }
+  .tool:hover .go { color: var(--ink); }
+  .tool:hover .go i { width: 40px; }
 
-  .dept-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 20px;
-    max-width: 1100px;
-  }
-  .dept-card {
-    background: #fff;
-    border-radius: 16px;
-    padding: 28px 24px;
-    cursor: pointer;
-    border: 2px solid transparent;
-    transition: transform .18s, box-shadow .18s, border-color .18s;
-    box-shadow: 0 2px 12px rgba(0,0,0,.06);
-    position: relative;
-    overflow: hidden;
-  }
-  .dept-card::before {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0;
-    height: 4px;
-    background: var(--accent, #FFE600);
-  }
-  .dept-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 28px rgba(0,0,0,.12);
-    border-color: var(--accent, #FFE600);
-  }
-  .dept-icon {
-    width: 52px; height: 52px; border-radius: 14px;
-    background: var(--accent-light, #fffce0);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 26px; margin-bottom: 16px;
-  }
-  .dept-card h2 { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
-  .dept-card .dept-en { font-size: 12px; color: #aaa; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
-  .dept-card .tool-count {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: 13px; color: #555;
-    background: #f5f5f5; border-radius: 20px; padding: 4px 12px;
-  }
-  .dept-card .tool-count span { font-weight: 700; color: #1a1a2e; }
-  .dept-arrow {
-    position: absolute; right: 20px; top: 50%;
-    transform: translateY(-50%);
-    font-size: 20px; color: #ccc;
-    transition: color .18s;
-  }
-  .dept-card:hover .dept-arrow { color: #555; }
+  /* ── 頁尾 ── */
+  footer { border-top: 1px solid var(--line); margin-top: auto; }
+  .ft { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 28px; padding-bottom: 40px; font-size: 12px; letter-spacing: 1px; color: var(--dim); flex-wrap: wrap; }
 
-  /* ── Tool list view ── */
-  .view-header {
-    display: flex; align-items: center; gap: 12px;
-    margin-bottom: 28px;
+  /* ── 響應式 ── */
+  @media (max-width: 1100px) {
+    .tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
-  .back-btn {
-    display: flex; align-items: center; gap: 6px;
-    background: none; border: 2px solid #e5e7eb;
-    border-radius: 8px; padding: 8px 14px;
-    font-size: 13px; color: #555; cursor: pointer;
-    font-family: inherit; transition: all .18s;
+  @media (max-width: 860px) {
+    .hd { height: 72px; }
+    nav .sep, nav .note { display: none; }
+    nav { gap: 18px; }
+    .hero { flex-direction: column; align-items: flex-start; padding-top: 56px; padding-bottom: 40px; gap: 28px; }
+    .dept { grid-template-columns: 1fr; gap: 20px; padding-top: 32px; padding-bottom: 40px; }
+    .dept-h { flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 12px 16px; }
+    .dept-d { width: 100%; }
   }
-  .back-btn:hover { border-color: #1a1a2e; color: #1a1a2e; }
-  .view-title-wrap h2 { font-size: 22px; font-weight: 800; }
-  .view-title-wrap p { font-size: 13px; color: #888; }
-
-  .tools-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 16px;
-    max-width: 1100px;
-  }
-  .tool-card {
-    background: #fff;
-    border-radius: 14px;
-    padding: 24px;
-    box-shadow: 0 2px 10px rgba(0,0,0,.06);
-    border: 2px solid transparent;
-    transition: all .18s;
-    position: relative;
-    overflow: hidden;
-  }
-  .tool-card::before {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0;
-    height: 3px;
-    background: var(--accent, #FFE600);
-  }
-  .tool-card:hover { border-color: var(--accent, #FFE600); transform: translateY(-2px); box-shadow: 0 6px 22px rgba(0,0,0,.1); }
-  .tool-card.coming-soon { opacity: .55; cursor: default; }
-  .tool-card.coming-soon:hover { transform: none; border-color: transparent; }
-  .tool-icon { font-size: 32px; margin-bottom: 12px; }
-  .tool-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
-  .tool-card p  { font-size: 13px; color: #666; line-height: 1.6; margin-bottom: 16px; }
-  .tool-btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: var(--accent, #FFE600);
-    color: #1a1a2e;
-    padding: 8px 16px; border-radius: 8px;
-    font-size: 13px; font-weight: 700;
-    text-decoration: none; border: none; cursor: pointer;
-    font-family: inherit; transition: background .18s;
-  }
-  .tool-btn:hover { filter: brightness(.93); }
-  .tool-badge-soon {
-    display: inline-block;
-    background: #f0f2f5; color: #aaa;
-    padding: 6px 14px; border-radius: 8px;
-    font-size: 12px; font-weight: 600;
-  }
-
   @media (max-width: 600px) {
-    header { padding: 0 20px; }
-    main   { padding: 24px 20px; }
-    .dept-grid, .tools-grid { grid-template-columns: 1fr; }
+    .tools { grid-template-columns: 1fr; }
+    .tool { min-height: 0; }
+    nav { display: none; }
+    .hero h1 { letter-spacing: 4px; }
   }
 </style>
 </head>
 <body>
 
-<!-- Password screen -->
+<!-- 密碼鎖 -->
 <div id="pw-screen">
   <div class="pw-box">
-    <div class="pw-logo">奧</div>
+    <svg class="pw-seal" width="44" height="44" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect x="1.5" y="1.5" width="31" height="31" rx="2" stroke="#b73a2e" stroke-width="1.5"/>
+      <text x="17" y="24" text-anchor="middle" font-family="'Noto Serif TC','PingFang TC',serif" font-size="19" font-weight="600" fill="#b73a2e">奧</text>
+    </svg>
     <h2>奧提瑪工具箱</h2>
-    <p>請輸入存取密碼</p>
-    <input type="password" id="pw-input" placeholder="••••••••" maxlength="20"
+    <p>內部使用，請輸入密碼</p>
+    <input type="password" id="pw-input" placeholder="••••••" autocomplete="off"
       onkeydown="if(event.key==='Enter')checkPw()">
     <button onclick="checkPw()">進入</button>
     <div class="pw-error" id="pw-error"></div>
   </div>
 </div>
 
-<!-- App -->
+<!-- 主畫面 -->
 <div id="app">
   <header>
-    <div class="header-brand">
-      <div style="width:42px;height:42px;border-radius:50%;background:#d42b2b;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;flex-shrink:0;padding-top:2px;">奧</div>
-      <div class="header-badge">TOOLS</div>
-      奧提瑪工具箱
+    <div class="wrap hd">
+      <a class="brand" href="#top">
+        <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="1.5" y="1.5" width="31" height="31" rx="2" stroke="#b73a2e" stroke-width="1.5"/>
+          <text x="17" y="24" text-anchor="middle" font-family="'Noto Serif TC','PingFang TC',serif" font-size="19" font-weight="600" fill="#b73a2e">奧</text>
+        </svg>
+        <span class="brand-t">
+          <span class="brand-zh">奧提瑪工具箱</span>
+          <span class="brand-en">OPTIMA TOOLBOX</span>
+        </span>
+      </a>
+      <nav>
+        <a href="#marketing">行銷</a>
+        <a href="#sales">業務</a>
+        <a href="#warehouse">倉管</a>
+        <a href="#finance">財務</a>
+        <span class="sep"></span>
+        <span class="note">內部使用</span>
+      </nav>
     </div>
-    <div class="header-sub">內部專用 · 請勿外傳</div>
   </header>
 
-  <main>
-    <!-- Department list view -->
-    <div id="view-home" class="view active">
-      <div class="dept-intro">
-        <h1>選擇部門</h1>
-        <p>點選部門以檢視可用工具</p>
+  <main id="top">
+    <section class="wrap hero">
+      <div class="hero-t">
+        <h1>日常工具，一處取用</h1>
+        <p>行銷、業務、倉管、財務四個部門的常用工具集中在這裡。點選即開，多數工具免登入。</p>
       </div>
-      <div class="dept-grid">
-
-        <div class="dept-card" style="--accent:#FFE600;--accent-light:#fffce0;"
-          onclick="showDept('marketing')">
-          <div class="dept-icon">📣</div>
-          <h2>行銷</h2>
-          <div class="dept-en">Marketing</div>
-          <div class="tool-count">工具 <span>3</span> 項</div>
-          <div class="dept-arrow">›</div>
-        </div>
-
-        <div class="dept-card" style="--accent:#4ECDC4;--accent-light:#e0faf8;"
-          onclick="showDept('sales')">
-          <div class="dept-icon">💼</div>
-          <h2>業務</h2>
-          <div class="dept-en">Sales</div>
-          <div class="tool-count">工具 <span>2</span> 項</div>
-          <div class="dept-arrow">›</div>
-        </div>
-
-        <div class="dept-card" style="--accent:#FF6B6B;--accent-light:#fff0f0;"
-          onclick="showDept('warehouse')">
-          <div class="dept-icon">📦</div>
-          <h2>倉管</h2>
-          <div class="dept-en">Warehouse</div>
-          <div class="tool-count">工具 <span>1</span> 項</div>
-          <div class="dept-arrow">›</div>
-        </div>
-
-        <div class="dept-card" style="--accent:#6C63FF;--accent-light:#f0eeff;"
-          onclick="showDept('finance')">
-          <div class="dept-icon">💰</div>
-          <h2>財務</h2>
-          <div class="dept-en">Finance</div>
-          <div class="tool-count">工具 <span>2</span> 項</div>
-          <div class="dept-arrow">›</div>
-        </div>
-
+      <div class="stats">
+        <div class="stat"><b>九</b><span>可用工具</span></div>
+        <div class="stat"><b>四</b><span>部門</span></div>
+        <div class="stat"><b>二</b><span>品牌</span></div>
       </div>
-    </div><!-- /view-home -->
+    </section>
 
-    <!-- Marketing tools -->
-    <div id="view-marketing" class="view">
-      <div class="view-header">
-        <button class="back-btn" onclick="showHome()">← 返回</button>
-        <div class="view-title-wrap">
-          <h2>📣 行銷工具</h2>
-          <p>Marketing · 共 3 項工具</p>
-        </div>
+    <!-- 行銷 -->
+    <section class="wrap dept" id="marketing">
+      <div class="dept-h">
+        <div class="dept-name"><i></i><h2>行銷</h2></div>
+        <div class="dept-en">MARKETING</div>
+        <div class="dept-d">廣告成效與連結追蹤，梅侍、醋覓兩品牌。</div>
       </div>
-      <div class="tools-grid">
-
-        <div class="tool-card" style="--accent:#FFE600;">
-          <div class="tool-icon">📈</div>
-          <h3>醋覓廣告成效系統</h3>
-          <p>醋覓 Chill Me 廣告投放成效追蹤與分析。</p>
-          <a class="tool-btn" href="https://chillme-ads.pages.dev/" target="_blank" rel="noopener">開啟工具 →</a>
-        </div>
-
-        <div class="tool-card" style="--accent:#FFE600;">
-          <div class="tool-icon">📈</div>
-          <h3>梅侍廣告成效系統</h3>
-          <p>梅侍廣告投放成效追蹤與分析。</p>
-          <a class="tool-btn" href="https://plumate-ads.pages.dev/" target="_blank" rel="noopener">開啟工具 →</a>
-        </div>
-
-        <div class="tool-card" style="--accent:#FFE600;">
-          <div class="tool-icon">🔗</div>
-          <h3>短網址產生器</h3>
-          <p>自助貼長網址、自動組 UTM，一鍵產生短網址（跨梅侍／醋覓）。<br><span style="color:#aaa;">需登入</span></p>
-          <a class="tool-btn" href="https://plumate-order.pages.dev/utm" target="_blank" rel="noopener">開啟工具 →</a>
-        </div>
-
-        <div class="tool-card coming-soon" style="--accent:#FFE600;">
-          <div class="tool-icon">📊</div>
-          <h3>活動成效報告</h3>
-          <p>彙整各檔期 KOL 活動數據，自動產出成效摘要報告。</p>
-          <span class="tool-badge-soon">即將推出</span>
-        </div>
-
+      <div class="tools">
+        <a class="tool" href="https://chillme-ads.pages.dev/" target="_blank" rel="noopener">
+          <div class="tool-top">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h18"/><path d="M4 16l5-6 4 3 7-8"/><path d="M16 5h4v4"/></svg>
+          </div>
+          <div class="tool-b">
+            <h3>醋覓廣告成效系統</h3>
+            <p>醋覓 Chill Me 廣告投放成效追蹤與分析。</p>
+          </div>
+          <div class="go"><span>開啟工具</span><i></i></div>
+        </a>
+        <a class="tool" href="https://plumate-ads.pages.dev/" target="_blank" rel="noopener">
+          <div class="tool-top">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h18"/><path d="M4 16l5-6 4 3 7-8"/><path d="M16 5h4v4"/></svg>
+          </div>
+          <div class="tool-b">
+            <h3>梅侍廣告成效系統</h3>
+            <p>梅侍廣告投放成效追蹤與分析。</p>
+          </div>
+          <div class="go"><span>開啟工具</span><i></i></div>
+        </a>
+        <a class="tool" href="https://plumate-order.pages.dev/utm" target="_blank" rel="noopener">
+          <div class="tool-top">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+            <span class="tag">需登入</span>
+          </div>
+          <div class="tool-b">
+            <h3>短網址產生器</h3>
+            <p>貼上長網址、自動組 UTM，一鍵產生短網址，梅侍、醋覓通用。</p>
+          </div>
+          <div class="go"><span>開啟工具</span><i></i></div>
+        </a>
       </div>
-    </div>
+    </section>
 
-    <!-- Sales tools -->
-    <div id="view-sales" class="view">
-      <div class="view-header">
-        <button class="back-btn" onclick="showHome()">← 返回</button>
-        <div class="view-title-wrap">
-          <h2>💼 業務工具</h2>
-          <p>Sales · 共 2 項工具</p>
-        </div>
+    <!-- 業務 -->
+    <section class="wrap dept" id="sales">
+      <div class="dept-h">
+        <div class="dept-name"><i></i><h2>業務</h2></div>
+        <div class="dept-en">SALES</div>
+        <div class="dept-d">客戶下單入口與每月業績。</div>
       </div>
-      <div class="tools-grid">
-
-        <div class="tool-card" style="--accent:#4ECDC4;">
-          <div class="tool-icon">🛒</div>
-          <h3>梅侍訂購意向頁</h3>
-          <p>梅侍訂購意向表單，客戶下單入口（LINE 通知＋來源歸因）。</p>
-          <a class="tool-btn" href="https://plumate-order.pages.dev/" target="_blank" rel="noopener">開啟工具 →</a>
-        </div>
-
-        <div class="tool-card" style="--accent:#4ECDC4;">
-          <div class="tool-icon">📈</div>
-          <h3>每月個人業績</h3>
-          <p>各業務每月業績、達成率與各品牌業績表（依 Fanny 主檔更新）。<br><span style="color:#aaa;">需登入</span></p>
-          <a class="tool-btn" href="https://optima-performance.pages.dev/" target="_blank" rel="noopener">開啟工具 →</a>
-        </div>
-
-        <div class="tool-card coming-soon" style="--accent:#4ECDC4;">
-          <div class="tool-icon">💵</div>
-          <h3>報價單產生器</h3>
-          <p>快速填寫商品明細與條件，匯出專業報價單 PDF。</p>
-          <span class="tool-badge-soon">即將推出</span>
-        </div>
-
-        <div class="tool-card coming-soon" style="--accent:#4ECDC4;">
-          <div class="tool-icon">🤝</div>
-          <h3>合約管理</h3>
-          <p>客戶合約建立、追蹤到期日與簽署狀態。</p>
-          <span class="tool-badge-soon">即將推出</span>
-        </div>
-
+      <div class="tools">
+        <a class="tool" href="https://plumate-order.pages.dev/" target="_blank" rel="noopener">
+          <div class="tool-top">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h9.2a1 1 0 0 0 1-.8L20 8H6"/><circle cx="9" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg>
+          </div>
+          <div class="tool-b">
+            <h3>梅侍訂購意向頁</h3>
+            <p>梅侍訂購意向表單，客戶下單入口，含 LINE 通知與來源歸因。</p>
+          </div>
+          <div class="go"><span>開啟工具</span><i></i></div>
+        </a>
+        <a class="tool" href="https://optima-performance.pages.dev/" target="_blank" rel="noopener">
+          <div class="tool-top">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-8"/><path d="M22 20H2"/></svg>
+            <span class="tag">需登入</span>
+          </div>
+          <div class="tool-b">
+            <h3>每月個人業績</h3>
+            <p>各業務每月業績、達成率與各品牌業績表，依 Fanny 主檔更新。</p>
+          </div>
+          <div class="go"><span>開啟工具</span><i></i></div>
+        </a>
       </div>
-    </div>
+    </section>
 
-    <!-- Warehouse tools -->
-    <div id="view-warehouse" class="view">
-      <div class="view-header">
-        <button class="back-btn" onclick="showHome()">← 返回</button>
-        <div class="view-title-wrap">
-          <h2>📦 倉管工具</h2>
-          <p>Warehouse · 共 1 項工具</p>
-        </div>
+    <!-- 倉管 -->
+    <section class="wrap dept" id="warehouse">
+      <div class="dept-h">
+        <div class="dept-name"><i></i><h2>倉管</h2></div>
+        <div class="dept-en">WAREHOUSE</div>
+        <div class="dept-d">文中進銷存料號主檔。</div>
       </div>
-      <div class="tools-grid">
-
-        <div class="tool-card" style="--accent:#FF6B6B;">
-          <div class="tool-icon">🧩</div>
-          <h3>梅侍料號小幫手</h3>
-          <p>打品名自動組料號（防重複）＋料號對照查詢，文中進銷存料號主檔。</p>
-          <a class="tool-btn" href="warehouse-sku.html">開啟工具 →</a>
-        </div>
-
-        <div class="tool-card coming-soon" style="--accent:#FF6B6B;">
-          <div class="tool-icon">📝</div>
-          <h3>出入庫記錄</h3>
-          <p>快速登記商品出入庫，自動彙總庫存現況。</p>
-          <span class="tool-badge-soon">即將推出</span>
-        </div>
-
-        <div class="tool-card coming-soon" style="--accent:#FF6B6B;">
-          <div class="tool-icon">🚚</div>
-          <h3>出貨單列印</h3>
-          <p>填寫訂單明細，自動產出可列印格式出貨單。</p>
-          <span class="tool-badge-soon">即將推出</span>
-        </div>
-
+      <div class="tools">
+        <a class="tool" href="warehouse-sku.html">
+          <div class="tool-top">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>
+          </div>
+          <div class="tool-b">
+            <h3>料號小幫手</h3>
+            <p>打品名自動組料號並防重複，料號對照查詢，梅侍、醋覓主檔。</p>
+          </div>
+          <div class="go"><span>開啟工具</span><i></i></div>
+        </a>
       </div>
-    </div>
+    </section>
 
-    <!-- Finance tools -->
-    <div id="view-finance" class="view">
-      <div class="view-header">
-        <button class="back-btn" onclick="showHome()">← 返回</button>
-        <div class="view-title-wrap">
-          <h2>💰 財務工具</h2>
-          <p>Finance · 共 3 項工具</p>
-        </div>
+    <!-- 財務 -->
+    <section class="wrap dept" id="finance">
+      <div class="dept-h">
+        <div class="dept-name"><i></i><h2>財務</h2></div>
+        <div class="dept-en">FINANCE</div>
+        <div class="dept-d">銷售整理、分潤結算與請假簽核。</div>
       </div>
-      <div class="tools-grid">
-
-        <div class="tool-card" style="--accent:#6C63FF;">
-          <div class="tool-icon">📊</div>
-          <h3>SIMPOS 銷售整理</h3>
-          <p>丟進 POS 匯出的訂單明細，自動整理成一單一列的銷售統計表（Excel 下載）。</p>
-          <a class="tool-btn" href="simpos-convert.html">開啟工具 →</a>
-        </div>
-
-        <div class="tool-card" style="--accent:#6C63FF;">
-          <div class="tool-icon">📋</div>
-          <h3>分潤對帳單</h3>
-          <p>KOL 團購結算專用，自動計算分潤金額，一鍵匯出 A4 PDF。</p>
-          <a class="tool-btn" href="invoice.html">開啟工具 →</a>
-        </div>
-
-        <div class="tool-card" style="--accent:#6C63FF;">
-          <div class="tool-icon">🗓️</div>
-          <h3>請假簽核系統</h3>
-          <p>員工線上申請請假、主管簽核、時數換算與月結匯出財務。</p>
-          <a class="tool-btn" href="https://pavement-wincing-rubble.ngrok-free.dev/" target="_blank" rel="noopener">開啟工具 →</a>
-        </div>
-
-        <div class="tool-card coming-soon" style="--accent:#6C63FF;">
-          <div class="tool-icon">🧾</div>
-          <h3>費用申請單</h3>
-          <p>員工費用申請表，線上填寫後匯出 PDF 供主管簽核。</p>
-          <span class="tool-badge-soon">即將推出</span>
-        </div>
-
-        <div class="tool-card coming-soon" style="--accent:#6C63FF;">
-          <div class="tool-icon">📈</div>
-          <h3>月結報表</h3>
-          <p>彙整各部門收支，自動產出月度財務摘要。</p>
-          <span class="tool-badge-soon">即將推出</span>
-        </div>
-
+      <div class="tools">
+        <a class="tool" href="simpos-convert.html">
+          <div class="tool-top">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 10h18"/><path d="M3 15h18"/><path d="M10 4v16"/></svg>
+          </div>
+          <div class="tool-b">
+            <h3>SIMPOS 銷售整理</h3>
+            <p>丟進 POS 匯出的訂單明細，整理成一單一列的銷售統計表，Excel 下載。</p>
+          </div>
+          <div class="go"><span>開啟工具</span><i></i></div>
+        </a>
+        <a class="tool" href="invoice.html">
+          <div class="tool-top">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z"/><path d="M9 8h6"/><path d="M9 12h6"/></svg>
+          </div>
+          <div class="tool-b">
+            <h3>分潤對帳單</h3>
+            <p>KOL 團購結算專用，自動計算分潤金額，一鍵匯出 A4 PDF。</p>
+          </div>
+          <div class="go"><span>開啟工具</span><i></i></div>
+        </a>
+        <a class="tool" href="https://pavement-wincing-rubble.ngrok-free.dev/" target="_blank" rel="noopener">
+          <div class="tool-top">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="1"/><path d="M3 10h18"/><path d="M8 3v4"/><path d="M16 3v4"/><path d="m9 15 2 2 4-4"/></svg>
+          </div>
+          <div class="tool-b">
+            <h3>請假簽核系統</h3>
+            <p>員工線上申請請假、主管簽核、時數換算與月結匯出財務。</p>
+          </div>
+          <div class="go"><span>開啟工具</span><i></i></div>
+        </a>
       </div>
-    </div>
-
+    </section>
   </main>
+
+  <footer>
+    <div class="wrap ft">
+      <div>奧提瑪股份有限公司 · 梅侍 Plumate ／ 醋覓 Chill Me</div>
+      <div>內部工具 · 請勿外傳連結</div>
+    </div>
+  </footer>
 </div><!-- /app -->
 
 <script>
 const HASH = 'b74583d0f9d2a4a4f89963602faa42a2c6e5b50dd030431b20388f09406aaa3e';
-
 async function sha256(str) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
-
 async function checkPw() {
   const val = document.getElementById('pw-input').value;
   const h = await sha256(val);
@@ -478,20 +379,6 @@ async function checkPw() {
     document.getElementById('pw-input').focus();
   }
 }
-
-function showDept(dept) {
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.getElementById('view-' + dept).classList.add('active');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function showHome() {
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.getElementById('view-home').classList.add('active');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// Init
 if (sessionStorage.getItem('pw_ok') === '1') {
   document.getElementById('pw-screen').classList.add('hidden');
   document.getElementById('app').classList.add('visible');
