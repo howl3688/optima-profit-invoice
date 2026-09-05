@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # 奧提瑪工具箱 — 正式部署（Cloudflare Pages，唯一正式站）
-#   正式網址：https://optima-profit-invoice.pages.dev/
+#   正式網址：https://optima-toolbox.pages.dev/（2026-09-05 由 optima-profit-invoice 改名；Cloudflare 不能改專案名，故另建專案）
+#   舊站 optima-profit-invoice.pages.dev 暫留，⛔ 不再部署到它（Howl 2026-09-05：舊名暫留）
 #
 # 用法：改完檔案後，在本資料夾執行 ./deploy.sh
 #
@@ -12,6 +13,6 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 npx wrangler pages deploy . \
-  --project-name optima-profit-invoice \
+  --project-name optima-toolbox \
   --branch main \
   --commit-dirty=true

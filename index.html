@@ -74,6 +74,10 @@
   .pw-box button:hover { background: #000; }
   .pw-error { color: var(--seal); font-size: 12.5px; margin-top: 10px; min-height: 18px; }
 
+  /* ── 舊網址搬家提示（只在舊站顯示） ── */
+  #moved { display: none; background: var(--ink); color: var(--paper); font-size: 13px; letter-spacing: 1px; text-align: center; padding: 10px 16px; line-height: 1.6; }
+  #moved a { color: #e9c98a; text-decoration: underline; }
+
   /* ── 外框 ── */
   #app { display: none; min-height: 100vh; flex-direction: column; }
   #app.visible { display: flex; }
@@ -181,6 +185,7 @@
 
 <!-- 主畫面 -->
 <div id="app">
+  <div id="moved">工具箱已搬到新網址 <a id="moved-link" href="https://optima-toolbox.pages.dev/">optima-toolbox.pages.dev</a>，請更新書籤。舊網址暫時保留。</div>
   <header>
     <div class="wrap hd">
       <a class="brand" href="#top">
@@ -391,6 +396,7 @@ async function checkPw() {
     document.getElementById('pw-input').focus();
   }
 }
+if (location.hostname === 'optima-profit-invoice.pages.dev') document.getElementById('moved').style.display = 'block';
 if (sessionStorage.getItem('pw_ok') === '1') {
   document.getElementById('pw-screen').classList.add('hidden');
   document.getElementById('app').classList.add('visible');
